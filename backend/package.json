@@ -1,0 +1,25 @@
+{
+  "name": "backend",
+  "version": "1.0.0",
+  "description": "codenames",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tdsone/code-names-llm.git"
+  },
+  "keywords": [
+    "codenames"
+  ],
+  "author": "julia+timon",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/tdsone/code-names-llm/issues"
+  },
+  "homepage": "https://github.com/tdsone/code-names-llm#readme",
+  "dependencies": {
+    "express": "^5.1.0"
+  }
+}
