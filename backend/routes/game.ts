@@ -1,8 +1,9 @@
-const express = require('express');
-const router = express.Router();
-const { generateCodenamesCards } = require('../ai.js');
+import express, { Request, Response } from 'express';
+import { generateCodenamesCards } from '../ai';
 
-router.post('/', async (req, res) => {
+const router = express.Router();
+
+router.post('/', async (req: Request, res: Response) => {
   try {
     const cards = await generateCodenamesCards();
     res.json({ success: true, cards });
@@ -12,4 +13,4 @@ router.post('/', async (req, res) => {
   }
 });
 
-module.exports = router;
+export default router;

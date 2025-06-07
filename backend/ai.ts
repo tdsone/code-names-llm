@@ -1,10 +1,15 @@
-const OpenAI = require('openai');
+import OpenAI from 'openai';
+
+interface CodenamesCard {
+  word: string;
+  type: 'red' | 'blue' | 'neutral' | 'assassin';
+}
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
-async function generateCodenamesCards() {
+export async function generateCodenamesCards(): Promise<CodenamesCard[]> {
   const prompt = `
     Generate a JSON array of 25 unique Codenames cards.
     Each card should have:
@@ -20,7 +25,9 @@ async function generateCodenamesCards() {
   });
 
   const text = response.choices[0].message.content;
-  return JSON.parse(text);
+  if (!text) {
+    throw new Error('No response from OpenAI');
+  }
+  
+  return JSON.parse(text) as CodenamesCard[];
 }
-
-module.exports = { generateCodenamesCards };
