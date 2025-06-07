@@ -7,42 +7,22 @@ import { useState } from "react";
 function App() {
   const [currentGame, setCurrentGame] = useState<GameType | null>(null);
 
-  const handleStartNewGame = () => {
-    // Mock game data for testing
-    const mockGame: GameType = {
-      id: "test-game-1",
-      currentTeam: "red",
-      phase: "guessing",
-      cards: [
-        { word: "APPLE", type: "red" },
-        { word: "OCEAN", type: "blue" },
-        { word: "MOUNTAIN", type: "neutral" },
-        { word: "SNAKE", type: "assassin" },
-        { word: "BOOK", type: "red" },
-        { word: "STAR", type: "blue" },
-        { word: "CHAIR", type: "neutral" },
-        { word: "FIRE", type: "red" },
-        { word: "CLOUD", type: "blue" },
-        { word: "PHONE", type: "neutral" },
-        { word: "TREE", type: "red" },
-        { word: "WATER", type: "blue" },
-        { word: "DOOR", type: "neutral" },
-        { word: "LIGHT", type: "red" },
-        { word: "GRASS", type: "blue" },
-        { word: "PAPER", type: "neutral" },
-        { word: "WIND", type: "red" },
-        { word: "STONE", type: "blue" },
-        { word: "SOUND", type: "neutral" },
-        { word: "DREAM", type: "red" },
-        { word: "NIGHT", type: "blue" },
-        { word: "DAY", type: "neutral" },
-        { word: "MOON", type: "red" },
-        { word: "SUN", type: "blue" },
-        { word: "RAIN", type: "neutral" },
-      ],
-      createdAt: new Date(),
-    };
-    setCurrentGame(mockGame);
+  const handleStartNewGame = async () => {
+    try {
+      
+      const response = await fetch("/api/game");
+      const data = await response.json();
+      const game: GameType = {
+        id: "test",
+        cards: data.game,
+        currentTeam: "red",
+        phase: "guessing",
+        createdAt: new Date()
+      };
+      setCurrentGame(game);
+    } catch (error) {
+      console.error("Failed to start new game:", error);
+    }
   };
 
   const handleCardClick = (cardIndex: number) => {

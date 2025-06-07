@@ -6,7 +6,7 @@ const app = express();
 const port = 3000;
 
 app.use(express.json());
-app.use('/game', gameRoutes);
+app.use('/api/game', gameRoutes);
 
 app.get('/', (req: Request, res: Response) => {
   res.send('Hello, World!');
