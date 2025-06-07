@@ -1,7 +1,3 @@
-interface CodenamesCard {
-    word: string;
-    type: 'red' | 'blue' | 'neutral' | 'assassin';
-}
-export declare function generateCodenamesCards(): Promise<CodenamesCard[]>;
-export {};
+import { Card } from '../shared/types';
+export declare function generateCodenamesCards(): Promise<Card[]>;
 //# sourceMappingURL=ai.d.ts.map

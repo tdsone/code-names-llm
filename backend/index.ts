@@ -1,6 +1,5 @@
 import 'dotenv/config';
 import express, { Request, Response } from 'express';
-import Game from '../shared/game';
 import gameRoutes from './routes/game';
 
 const app = express();
