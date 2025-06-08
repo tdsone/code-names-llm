@@ -1,14 +1,25 @@
+import { useMemo } from "react";
 import type { Card, Game as GameType } from "../../../shared/types";
 import { Button } from "./ui/button";
 
 interface GameProps {
   game: GameType;
   onCardClick: (cardIndex: number) => void;
+  revealAll?: boolean;
 }
 
-export function Game({ game, onCardClick }: GameProps) {
-  const getCardStyle = (card: Card) => {
-    if (!card.revealed) {
+export function Game({ game, onCardClick, revealAll }: GameProps) {
+  const shuffledIndices = useMemo(() => {
+    const indices = [...Array(game.cards.length).keys()];
+    for (let i = indices.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [indices[i], indices[j]] = [indices[j], indices[i]];
+    }
+    return indices;
+  }, [game.id]);
+
+  const getCardStyle = (card: Card, isRevealed: boolean) => {
+    if (!isRevealed) {
       return "bg-gray-100 hover:bg-gray-200 border-gray-300 text-gray-900";
     }
 
@@ -72,25 +83,29 @@ export function Game({ game, onCardClick }: GameProps) {
 
         {/* Game Board */}
         <div className="grid grid-cols-5 gap-4 mb-8">
-          {game.cards.map((card, index) => (
-            <Button
-              key={index}
-              onClick={() => onCardClick(index)}
-              className={`
-                h-24 text-lg font-semibold border-2 transition-all duration-200
-                ${getCardStyle(card)}
-                ${
-                  !card.revealed
-                    ? "hover:scale-105 cursor-pointer"
-                    : "cursor-default"
-                }
-              `}
-              disabled={card.revealed || game.phase === "finished"}
-              variant="ghost"
-            >
-              {card.word}
-            </Button>
-          ))}
+          {shuffledIndices.map((realIndex) => {
+            const card = game.cards[realIndex];
+            const isRevealed = card.revealed || !!revealAll;
+            return (
+              <Button
+                key={realIndex}
+                onClick={() => onCardClick(realIndex)}
+                className={`
+                  h-24 text-lg font-semibold border-2 transition-all duration-200
+                  ${getCardStyle(card, isRevealed)}
+                  ${
+                    !card.revealed
+                      ? "hover:scale-105 cursor-pointer"
+                      : "cursor-default"
+                  }
+                `}
+                disabled={card.revealed || game.phase === "finished"}
+                variant="ghost"
+              >
+                {card.word}
+              </Button>
+            );
+          })}
         </div>
 
         {/* Game Stats */}

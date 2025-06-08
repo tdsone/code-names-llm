@@ -1,51 +1,68 @@
 import "./App.css";
-import { Button } from "./components/ui/button"
-import { Game } from "./components/Game"
-import type { Game as GameType } from "../../shared/types"
-import { useState } from "react"
+import { Button } from "./components/ui/button";
+import { Game } from "./components/Game";
+import type { Game as GameType } from "../../shared/types";
+import { useState, useEffect } from "react";
 import { isAISpymasterTurn } from "../utils/isAISpymaster";
-import { useEffect } from "react";
-
-
+import { ClueForm } from "./components/ClueForm";
 
 function App() {
   const [currentGame, setCurrentGame] = useState<GameType | null>(null);
+  const human = currentGame
+    ? [
+        ...currentGame.teams.red.players,
+        ...currentGame.teams.blue.players,
+      ].find((p) => p.agent === "human")
+    : null;
+
+  const role = human?.role === "spymaster" ? "Spymaster" : "Operative";
+  const revealAll = human?.role === "spymaster";
+  const isHumanSpymasterTurn =
+    currentGame &&
+    human?.role === "spymaster" &&
+    currentGame.phase === "waiting" &&
+    currentGame.teams[currentGame.currentTeam].players.find(
+      (p) => p.agent === "human" && p.role === "spymaster"
+    );
 
   const handleStartNewGame = async () => {
     try {
-      const response = await fetch("/api/game")
-      const data = await response.json()
-      setCurrentGame(data.game)
+      const response = await fetch("/api/game");
+      const data = await response.json();
+      setCurrentGame(data.game);
     } catch (error) {
       console.error("Failed to start new game:", error);
     }
   };
 
   const handleCardClick = async (cardIndex: number) => {
-  if (!currentGame) return;
+    if (!currentGame) return;
 
-  // only allow clicking if we're in the guessing phase and guesses remain
-  if (
-    currentGame.phase !== "guessing" ||
-    (currentGame.guessesRemaining !== undefined &&
-      currentGame.guessesRemaining <= 0)
-  ) {
-    return;
-  }
+    // only allow clicking if we're in the guessing phase and guesses remain
+    if (
+      currentGame.phase !== "guessing" ||
+      (currentGame.guessesRemaining !== undefined &&
+        currentGame.guessesRemaining <= 0)
+    ) {
+      return;
+    }
 
-  // reveal by asking the backend
-  try {
-    const res = await fetch(`/api/game/${currentGame.id}/cards/${cardIndex}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ team: currentGame.currentTeam }),
-    });
-    const { game } = await res.json();
-    setCurrentGame(game); // new game state includes updated cards + possible turn switch
-  } catch (err) {
-    console.error("Failed to flip card:", err);
-  }
-};
+    // reveal by asking the backend
+    try {
+      const res = await fetch(
+        `/api/game/${currentGame.id}/cards/${cardIndex}`,
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ team: currentGame.currentTeam }),
+        }
+      );
+      const { game } = await res.json();
+      setCurrentGame(game); // new game state includes updated cards + possible turn switch
+    } catch (err) {
+      console.error("Failed to flip card:", err);
+    }
+  };
 
   // ➋ When the game lands in "waiting" *and* the active spymaster is AI,
   //    ask the backend to generate the clue, then refresh local state.
@@ -54,12 +71,11 @@ function App() {
 
     if (isAISpymasterTurn(currentGame)) {
       (async () => {
-        const res = await fetch(
-          `/api/game/${currentGame.id}/ai-clue`,
-          { method: "POST" }
-        );
+        const res = await fetch(`/api/game/${currentGame.id}/ai-clue`, {
+          method: "POST",
+        });
         const { game } = await res.json();
-        setCurrentGame(game);    // <- now contains game.clue, phase:"guessing"
+        setCurrentGame(game); // <- now contains game.clue, phase:"guessing"
       })().catch(console.error);
     }
   }, [currentGame]);
@@ -75,12 +91,33 @@ function App() {
             </span>
           </div>
         )}
-        <Game game={currentGame} onCardClick={handleCardClick} />
+        {human && (
+          <div className="mb-3 text-lg text-gray-800 dark:text-gray-100 font-medium">
+            You are the <span className="font-bold">{role}</span> — the AI is
+            your {role === "Spymaster" ? "Operative" : "Spymaster"}.
+          </div>
+        )}
+        {isHumanSpymasterTurn && (
+          <ClueForm
+            onSubmit={async ({ word, number }) => {
+              try {
+                const res = await fetch(`/api/game/${currentGame.id}/clue`, {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ word, number }),
+                });
+                const { game } = await res.json();
+                setCurrentGame(game);
+              } catch (err) {
+                console.error("Clue submission failed", err);
+              }
+            }}
+          />
+        )}
+        <Game game={currentGame} onCardClick={handleCardClick} revealAll={revealAll} />
       </div>
     );
   }
-
-  
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-b from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800">

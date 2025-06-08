@@ -10,6 +10,7 @@ import type {
 
 import { v4 as uuidv4 } from "uuid";
 import { maybeGenerateClue } from "../ai";
+import { makeAIGuesses } from "../ai";
 
 // Store all active games keyed by their ID
 const games: Record<string, GameType> = {};
@@ -62,22 +63,25 @@ router.get("/", async (req: Request, res: Response) => {
     }));
 
     // --- build initial players & teams -----------------------------------
+    // randomly decide if humans are spymasters or operatives
+    const humansAreSpymasters = Math.random() < 0.5;
+
     const redTeam: TeamType = {
       color: "red",
       players: [
         {
           id: uuidv4(),
-          name: "Red Human",
-          agent: "human",
-          role: "operative",
-        } as PlayerType,
-        {
-          id: "ai-red",
-          name: "Red Bot",
-          agent: "ai",
+          name: humansAreSpymasters ? "Red Human" : "Red Bot",
+          agent: humansAreSpymasters ? "human" : "ai",
           role: "spymaster",
         } as PlayerType,
-      ] as [PlayerType, PlayerType],
+        {
+          id: humansAreSpymasters ? "ai-red" : uuidv4(),
+          name: humansAreSpymasters ? "Red Bot" : "Red Human",
+          agent: humansAreSpymasters ? "ai" : "human",
+          role: "operative",
+        } as PlayerType,
+      ],
     };
 
     const blueTeam: TeamType = {
@@ -85,17 +89,17 @@ router.get("/", async (req: Request, res: Response) => {
       players: [
         {
           id: uuidv4(),
-          name: "Blue Human",
-          agent: "human",
-          role: "operative",
-        } as PlayerType,
-        {
-          id: "ai-blue",
-          name: "Blue Bot",
-          agent: "ai",
+          name: humansAreSpymasters ? "Blue Human" : "Blue Bot",
+          agent: humansAreSpymasters ? "human" : "ai",
           role: "spymaster",
         } as PlayerType,
-      ] as [PlayerType, PlayerType],
+        {
+          id: humansAreSpymasters ? "ai-blue" : uuidv4(),
+          name: humansAreSpymasters ? "Blue Bot" : "Blue Human",
+          agent: humansAreSpymasters ? "ai" : "human",
+          role: "operative",
+        } as PlayerType,
+      ],
     };
 
     const teams: { red: TeamType; blue: TeamType } = {
@@ -174,18 +178,25 @@ router.put("/:id", async (req, res) => {
 });
 
 // POST /games/:id/clue    { word: "animals", number: 4 }
-router.post("/:id/clue", (req, res) => {
+router.post("/:id/clue", async (req, res) => {
   const { id } = req.params;
   const { word, number } = req.body as ClueType;
   const game = games[id];
 
   game.clue = { word, number };
-  game.guessesRemaining = number + 1; // classic Codenames rule
+  game.guessesRemaining = number + 1;
   game.phase = "guessing";
+
+  // Determine if the operative is AI
+  const operative = game.teams[game.currentTeam].players.find(p => p.role === "operative");
+  const operativeIsAI = operative?.agent === "ai";
+
+  if (operativeIsAI) {
+    await makeAIGuesses(game); // calls OpenAI, flips cards, ends turn if needed
+  }
 
   res.json({ success: true, game });
 });
-
 
 
 // helper that swaps teams when a turn ends
@@ -249,19 +260,24 @@ router.put("/:id/cards/:index", async (req: Request, res: Response) => {
   // --- outcome logic --------------------------------------------------------
   const wrongTeam   = card.type !== team && card.type !== "neutral";
   const assassin    = card.type === "assassin";
-  const teamWon     = game.cards
-    .filter((c) => c.type === team)
+  const redWon = game.cards
+    .filter((c) => c.type === "red")
+    .every((c) => c.revealed);
+
+  const blueWon = game.cards
+    .filter((c) => c.type === "blue")
     .every((c) => c.revealed);
   const noGuesses   =
     game.guessesRemaining !== undefined && game.guessesRemaining <= 0;
+  const neutral     = card.type === "neutral";
 
   if (assassin) {
     game.phase  = "finished";
     game.winner = team === "red" ? "blue" : "red";
-  } else if (teamWon) {
+  } else if (redWon || blueWon) {
     game.phase  = "finished";
-    game.winner = team;
-  } else if (wrongTeam || noGuesses) {
+    game.winner = redWon ? "red" : "blue";
+  } else if (neutral || wrongTeam || noGuesses) {
     // delegate turn‑end housekeeping (and possible AI clue) to helper
     await endTurn(game);
   }
