@@ -1,59 +1,282 @@
-import express, { Request, Response } from 'express'
-import axios from 'axios'
+import axios from "axios";
+import express, { type Request, type Response } from "express";
+import type {
+  Game as GameType,
+  Card as CardType,
+  Clue as ClueType,
+  Player as PlayerType,
+  Team as TeamType,
+} from "../../shared/types";
 
+import { v4 as uuidv4 } from "uuid";
+import { maybeGenerateClue } from "../ai";
+
+// Store all active games keyed by their ID
+const games: Record<string, GameType> = {};
 
 const router = express.Router();
 
-router.get('/', async (req: Request, res: Response) => {
+router.get("/", async (req: Request, res: Response) => {
   try {
-
     const payload = {
-      model: 'gpt-4.1',
+      model: "gpt-4.1",
       input: [
         {
-          role: 'user',
+          role: "user",
           content: [
             {
-              type: 'input_file',
-              file_id: 'file-Aep2ne51i85kigrsvN6ZGm',
+              type: "input_file",
+              file_id: "file-Aep2ne51i85kigrsvN6ZGm",
             },
             {
-              type: 'input_text',
-              text: 'Generate a JSON array of 25 unique Codenames cards. Each card should have:\n- a word (string),\n- a type (one of "red", "blue", "neutral", "assassin").\nMake sure there are 9 red, 8 blue, 7 neutral, 1 assassin.\nRespond with ONLY raw JSON. Do NOT include markdown or explanations.'
-            }
-          ]
-        }
-      ]
+              type: "input_text",
+              text: 'Generate a JSON array of 25 unique Codenames cards. Each card should have:\n- a word (string),\n- a type (one of "red", "blue", "neutral", "assassin").\nMake sure there are 9 red, 8 blue, 7 neutral, 1 assassin.\nRespond with ONLY raw JSON. Do NOT include markdown or explanations.',
+            },
+          ],
+        },
+      ],
     };
 
     const openaiResponse = await axios.post(
-      'https://api.openai.com/v1/responses',
+      "https://api.openai.com/v1/responses",
       payload,
       {
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`
-        }
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
+        },
       }
     );
 
     const rawText = openaiResponse.data.output[0].content[0].text;
 
     // Strip ```json ... ```
-    const jsonText = rawText.replace(/^```json\n/, '').replace(/\n```$/, '');
+    const jsonText = rawText.replace(/^```json\n/, "").replace(/\n```$/, "");
 
     // Parse it
-    const game = JSON.parse(jsonText);
+    const parsedCards = JSON.parse(jsonText) as Omit<CardType, "revealed">[];
+
+    const cards: CardType[] = parsedCards.map((c) => ({
+      ...c,
+      revealed: false,
+    }));
+
+    // --- build initial players & teams -----------------------------------
+    const redTeam: TeamType = {
+      color: "red",
+      players: [
+        {
+          id: uuidv4(),
+          name: "Red Human",
+          agent: "human",
+          role: "operative",
+        } as PlayerType,
+        {
+          id: "ai-red",
+          name: "Red Bot",
+          agent: "ai",
+          role: "spymaster",
+        } as PlayerType,
+      ] as [PlayerType, PlayerType],
+    };
+
+    const blueTeam: TeamType = {
+      color: "blue",
+      players: [
+        {
+          id: uuidv4(),
+          name: "Blue Human",
+          agent: "human",
+          role: "operative",
+        } as PlayerType,
+        {
+          id: "ai-blue",
+          name: "Blue Bot",
+          agent: "ai",
+          role: "spymaster",
+        } as PlayerType,
+      ] as [PlayerType, PlayerType],
+    };
+
+    const teams: { red: TeamType; blue: TeamType } = {
+      red: redTeam,
+      blue: blueTeam,
+    };
+
+    const game: GameType = {
+      id: uuidv4(),
+      cards,
+      teams,
+      currentTeam: Math.random() < 0.5 ? "red" : "blue",
+      phase: "waiting",
+      createdAt: new Date(),
+    };
+    games[game.id] = game;
 
     res.json({
       success: true,
-      game
+      game,
     });
-
   } catch (error: any) {
-    console.error('Error sending PDF to OpenAI:', error.message);
+    console.error("Error sending PDF to OpenAI:", error.message);
     res.status(500).json({ success: false, message: error.message });
   }
+});
+
+// @ts-ignore
+router.get("/:id", (req, res) => {
+  const { id } = req.params;
+  const game = games[id];
+
+  if (!game) {
+    return res.status(404).json({
+      success: false,
+      message: "Game not found.",
+    });
+  }
+
+  const activeTeam = game.teams[game.currentTeam];
+  const activeSpymaster = activeTeam.players.find(
+    (p) => p.role === "spymaster"
+  );
+  const activeOperative = activeTeam.players.find(
+    (p) => p.role === "operative"
+  );
+
+  res.json({
+    success: true,
+    game,
+    activeSpymaster,
+    activeOperative,
+  });
+});
+
+// @ts-ignore
+router.put("/:id", async (req, res) => {
+  const { id } = req.params;
+  const updatedGame = req.body as Partial<GameType>;
+
+  const existingGame = games[id];
+  if (!existingGame) {
+    return res.status(404).json({ success: false, message: "Game not found." });
+  }
+
+  const game: GameType = {
+    ...existingGame,
+    ...updatedGame,
+    id: existingGame.id, // keep original ID
+    createdAt: existingGame.createdAt, // keep original creation time
+  };
+
+  games[id] = game;
+
+  res.json({ success: true, game });
+});
+
+// POST /games/:id/clue    { word: "animals", number: 4 }
+router.post("/:id/clue", (req, res) => {
+  const { id } = req.params;
+  const { word, number } = req.body as ClueType;
+  const game = games[id];
+
+  game.clue = { word, number };
+  game.guessesRemaining = number + 1; // classic Codenames rule
+  game.phase = "guessing";
+
+  res.json({ success: true, game });
+});
+
+
+
+// helper that swaps teams when a turn ends
+async function endTurn(game: GameType): Promise<void> {
+  game.currentTeam = game.currentTeam === "red" ? "blue" : "red";
+  game.phase = "waiting";
+  game.clue = undefined;
+  game.guessesRemaining = undefined;
+
+  await maybeGenerateClue(game);
+}
+
+/**
+ * PUT /game/:id/cards/:index
+ * Flip a single card for the active team.
+ * Body: { team: "red" | "blue" }
+ */
+//@ts-ignore
+router.put("/:id/cards/:index", async (req: Request, res: Response) => {
+  const { id, index } = req.params;
+  const { team } = req.body as { team: "red" | "blue" };
+
+  const game = games[id];
+  if (!game) {
+    return res.status(404).json({ success: false, message: "Game not found." });
+  }
+
+  // --- basic guards ---------------------------------------------------------
+  if (game.phase !== "guessing") {
+    return res
+      .status(409)
+      .json({ success: false, message: "No guesses allowed right now." });
+  }
+
+  if (team !== game.currentTeam) {
+    return res
+      .status(409)
+      .json({ success: false, message: "It's not your team's turn." });
+  }
+
+  const i = Number(index);
+  if (isNaN(i) || i < 0 || i >= game.cards.length) {
+    return res
+      .status(400)
+      .json({ success: false, message: "Invalid card index." });
+  }
+
+  const card = game.cards[i];
+  if (card.revealed) {
+    return res
+      .status(409)
+      .json({ success: false, message: "Card already revealed." });
+  }
+
+  // --- reveal the card ------------------------------------------------------
+  card.revealed = true;
+  if (game.guessesRemaining !== undefined) {
+    game.guessesRemaining -= 1;
+  }
+
+  // --- outcome logic --------------------------------------------------------
+  const wrongTeam   = card.type !== team && card.type !== "neutral";
+  const assassin    = card.type === "assassin";
+  const teamWon     = game.cards
+    .filter((c) => c.type === team)
+    .every((c) => c.revealed);
+  const noGuesses   =
+    game.guessesRemaining !== undefined && game.guessesRemaining <= 0;
+
+  if (assassin) {
+    game.phase  = "finished";
+    game.winner = team === "red" ? "blue" : "red";
+  } else if (teamWon) {
+    game.phase  = "finished";
+    game.winner = team;
+  } else if (wrongTeam || noGuesses) {
+    // delegate turn‑end housekeeping (and possible AI clue) to helper
+    await endTurn(game);
+  }
+
+  res.json({ success: true, game, flipped: card });
+});
+
+
+//@ts-ignore TESTING AI CLUES - NOT FOR PROD 
+router.post("/:id/ai-clue", async (req, res) => {
+  const game = games[req.params.id];
+  if (!game) return res.status(404).json({ success:false, message:"Game not found" });
+
+  await maybeGenerateClue(game);
+  res.json({ success: true, game });
 });
 
 export default router;
