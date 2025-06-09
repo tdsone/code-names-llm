@@ -16,6 +16,9 @@ import { makeAIGuesses } from "../ai";
 const games: Record<string, GameType> = {};
 
 const router = express.Router();
+const startingTeam = Math.random() < 0.5 ? "red" : "blue";
+const redCount = startingTeam === "red" ? 9 : 8;
+const blueCount = startingTeam === "blue" ? 9 : 8;
 
 router.get("/", async (req: Request, res: Response) => {
   try {
@@ -31,7 +34,11 @@ router.get("/", async (req: Request, res: Response) => {
             },
             {
               type: "input_text",
-              text: 'Generate a JSON array of 25 unique Codenames cards. Each card should have:\n- a word (string),\n- a type (one of "red", "blue", "neutral", "assassin").\nMake sure there are 9 red, 8 blue, 7 neutral, 1 assassin.\nRespond with ONLY raw JSON. Do NOT include markdown or explanations.',
+              text: `Generate a JSON array of 25 unique Codenames cards. Each card should have:
+- a word (string),
+- a type (one of "red", "blue", "neutral", "assassin").
+Make sure there are ${redCount} red, ${blueCount} blue, 7 neutral, 1 assassin.
+Respond with ONLY raw JSON. Do NOT include markdown or explanations.`,
             },
           ],
         },
@@ -60,7 +67,7 @@ router.get("/", async (req: Request, res: Response) => {
     const cards: CardType[] = parsedCards.map((c) => ({
       ...c,
       revealed: false,
-    }));
+    }));    
 
     // --- build initial players & teams -----------------------------------
     // randomly decide if humans are spymasters or operatives
@@ -111,7 +118,7 @@ router.get("/", async (req: Request, res: Response) => {
       id: uuidv4(),
       cards,
       teams,
-      currentTeam: Math.random() < 0.5 ? "red" : "blue",
+      currentTeam: startingTeam,
       phase: "waiting",
       createdAt: new Date(),
     };
@@ -192,7 +199,8 @@ router.post("/:id/clue", async (req, res) => {
   const operativeIsAI = operative?.agent === "ai";
 
   if (operativeIsAI) {
-    await makeAIGuesses(game); // calls OpenAI, flips cards, ends turn if needed
+    await makeAIGuesses(game);
+    console.log("After AI guesses:", game.cards.map(c => ({ word: c.word, revealed: c.revealed })));
   }
 
   res.json({ success: true, game });

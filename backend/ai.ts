@@ -35,6 +35,8 @@ async function generateClue(game: GameType): Promise<ClueType> {
 
   const team      = game.currentTeam as "red" | "blue";
   const otherTeam = team === "red" ? "blue" : "red";
+  const redCount = game.currentTeam === "red" ? 9 : 8;
+const blueCount = game.currentTeam === "blue" ? 9 : 8;
 
   const rulesText = `
     You are the spymaster for the ${team.toUpperCase()} team.
@@ -131,5 +133,37 @@ export async function makeAIGuesses(game: GameType): Promise<void> {
     .trim();
 
   const result = JSON.parse(jsonText) as { guesses: number[] };
+  let turnShouldEnd = false;
 
+  for (const index of result.guesses) {
+    if (!game.cards[index].revealed) {
+      game.cards[index].revealed = true;
+      game.guessesRemaining!--;
+
+      const card = game.cards[index];
+      if (card.type !== game.currentTeam) {
+        // Wrong guess — end turn
+        turnShouldEnd = true;
+        break;
+      }
+
+      if ((card as { type: "assassin" | "neutral" | "red" | "blue" }).type === "assassin") {
+        // Game over logic could go here
+        game.phase = "finished";
+        return;
+      }
+
+      if (game.guessesRemaining! <= 0) {
+        turnShouldEnd = true;
+        break;
+      }
+    }
+  }
+
+  if (turnShouldEnd) {
+    game.currentTeam = game.currentTeam === "red" ? "blue" : "red";
+    game.phase = "waiting";
+    game.clue = undefined;
+    game.guessesRemaining = undefined;
+  }
 }

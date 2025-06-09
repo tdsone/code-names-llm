@@ -8,23 +8,26 @@ import { ClueForm } from "./components/ClueForm";
 
 function App() {
   const [currentGame, setCurrentGame] = useState<GameType | null>(null);
-  const human = currentGame
-    ? [
-        ...currentGame.teams.red.players,
-        ...currentGame.teams.blue.players,
-      ].find((p) => p.agent === "human")
-    : null;
+const human = currentGame
+  ? [
+      ...currentGame.teams.red.players.map((p) => ({ ...p, team: "red" as const })),
+      ...currentGame.teams.blue.players.map((p) => ({ ...p, team: "blue" as const })),
+    ].find(
+      (p) =>
+        p.agent === "human" &&
+        p.role === "spymaster" &&
+        p.team === currentGame.currentTeam
+    )
+  : null;
 
   const role = human?.role === "spymaster" ? "Spymaster" : "Operative";
   const revealAll = human?.role === "spymaster";
   const isHumanSpymasterTurn =
-    currentGame &&
-    human?.role === "spymaster" &&
-    currentGame.phase === "waiting" &&
-    currentGame.teams[currentGame.currentTeam].players.find(
-      (p) => p.agent === "human" && p.role === "spymaster"
-    );
-
+  currentGame &&
+  human?.role === "spymaster" &&
+  currentGame.phase === "waiting" &&
+  human?.team === currentGame.currentTeam
+  
   const handleStartNewGame = async () => {
     try {
       const response = await fetch("/api/game");
