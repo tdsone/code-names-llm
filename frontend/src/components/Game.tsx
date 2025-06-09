@@ -15,6 +15,7 @@ export function Game({ game, onCardClick, revealAll }: GameProps) {
   // Track the previous team that made a move
   const [previousTeam, setPreviousTeam] = useState<GameType["currentTeam"]>(game.currentTeam);
 
+
   useEffect(() => {
     if (guessResult) {
       const timer = setTimeout(() => {
@@ -94,13 +95,22 @@ export function Game({ game, onCardClick, revealAll }: GameProps) {
 );
 
   const getPhaseDisplay = () => {
+    const currentPlayers = game.teams[game.currentTeam].players;
+    const spymaster = currentPlayers.find((p) => p.role === "spymaster");
+    const operative = currentPlayers.find((p) => p.role === "operative");
+
+    if (game.phase === "waiting") {
+      if (game.clue && operative?.agent === "ai") return "Operative is thinking...";
+      if (!game.clue && spymaster?.agent === "ai") return "Spymaster is thinking...";
+      if (!game.clue && spymaster?.agent === "human") return "Make a clue";
+      return "Waiting...";
+    }
+
     switch (game.phase) {
-      case "waiting":
-        return "Waiting to start...";
       case "giving-clue":
-        return "Spymaster giving clue";
+        return spymaster?.agent === "ai" ? "Spymaster is thinking..." : "Make a clue";
       case "guessing":
-        return "Team guessing";
+        return operative?.agent === "ai" ? "Operative is thinking..." : "Team guessing";
       case "finished":
         return `Game finished! ${game.winner} team wins!`;
       default:
@@ -198,6 +208,12 @@ export function Game({ game, onCardClick, revealAll }: GameProps) {
             </span>
           )}
         </div>
+
+        {game.phase === "waiting" && (
+          <div className="mb-4 px-4 py-2 bg-indigo-600 text-white font-semibold rounded shadow text-center">
+            {getPhaseDisplay()}
+          </div>
+        )}
 
         <div className="flex flex-col items-center mt-6">
 
