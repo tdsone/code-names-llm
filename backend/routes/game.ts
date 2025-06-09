@@ -37,7 +37,7 @@ router.get("/", async (req: Request, res: Response) => {
               text: `Generate a JSON array of 25 unique Codenames cards. Each card should have:
 - a word (string),
 - a type (one of "red", "blue", "neutral", "assassin").
-Make sure there are ${redCount} red, ${blueCount} blue, 7 neutral, 1 assassin. NO team should have MORE THAN 9 CARDS! Only one team can have more than 8 cards!
+Make sure there are ${redCount} red, ${blueCount} blue, 7 neutral, 1 assassin. NO team should have MORE THAN 9 CARDS! Only one team can have 9 cards!
 Respond with ONLY raw JSON. Do NOT include markdown or explanations.`,
             },
           ],

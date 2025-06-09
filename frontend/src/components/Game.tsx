@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useState, useEffect } from "react";
 import type { Card, Game as GameType } from "../../../shared/types";
 import { Button } from "./ui/button";
 
@@ -9,6 +9,28 @@ interface GameProps {
 }
 
 export function Game({ game, onCardClick, revealAll }: GameProps) {
+  const [guessResult, setGuessResult] = useState<"right" | "wrong" | null>(null);
+  const [turnPassed, setTurnPassed] = useState(false);
+
+  useEffect(() => {
+    if (guessResult) {
+      const timer = setTimeout(() => {
+        if (guessResult === "wrong") {
+          setTurnPassed(true);
+        }
+        setGuessResult(null);
+      }, 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [guessResult]);
+
+  useEffect(() => {
+    if (turnPassed) {
+      const timer = setTimeout(() => setTurnPassed(false), 1500);
+      return () => clearTimeout(timer);
+    }
+  }, [turnPassed]);
+
   const shuffledIndices = useMemo(() => {
     const indices = [...Array(game.cards.length).keys()];
     for (let i = indices.length - 1; i > 0; i--) {
@@ -41,6 +63,10 @@ export function Game({ game, onCardClick, revealAll }: GameProps) {
     return game.currentTeam === "red" ? "Red Team" : "Blue Team";
   };
 
+  const [revealedCards, setRevealedCards] = useState<boolean[]>(() =>
+  game.cards.map((c) => c.revealed ?? false)
+);
+
   const getPhaseDisplay = () => {
     switch (game.phase) {
       case "waiting":
@@ -56,9 +82,36 @@ export function Game({ game, onCardClick, revealAll }: GameProps) {
     }
   };
 
+  const handleCardClick = (cardIndex: number) => {
+    const card = game.cards[cardIndex];
+    if (!revealedCards[cardIndex] && game.phase === "guessing") {
+      const isCorrect = card.type === game.currentTeam;
+      setGuessResult(isCorrect ? "right" : "wrong");
+
+      // Optimistically reveal the card
+      setRevealedCards((prev) => {
+        const updated = [...prev];
+        updated[cardIndex] = true;
+        return updated;
+      });
+    }
+
+    onCardClick(cardIndex);
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 p-4">
       <div className="max-w-6xl mx-auto">
+        {guessResult && (
+          <div className={`absolute top-4 left-1/2 transform -translate-x-1/2 px-6 py-2 rounded text-white text-xl font-bold shadow-md z-50 transition-opacity duration-500 ${guessResult === "right" ? "bg-green-600" : "bg-red-600"}`}>
+            {guessResult === "right" ? "Right Guess!" : "Wrong Guess!"}
+          </div>
+        )}
+        {turnPassed && (
+          <div className="absolute top-20 left-1/2 transform -translate-x-1/2 px-6 py-3 rounded-lg bg-yellow-500 text-white text-lg font-semibold shadow-lg z-50">
+            Turn passed to the other team
+          </div>
+        )}
         {/* Game Header */}
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-2">
@@ -109,7 +162,7 @@ export function Game({ game, onCardClick, revealAll }: GameProps) {
 
         {/* Current Turn Info and Clue */}
         <div className="flex justify-center items-center gap-6 mb-6 text-lg font-semibold text-gray-700 dark:text-gray-300">
-          <span>{getCurrentTeamDisplay()} {getPhaseDisplay()}:</span>
+          <span>{getCurrentTeamDisplay()} {getPhaseDisplay()}</span>
           {game.clue && game.phase === "guessing" && (
             <span className="flex items-center gap-2 text-xl">
               <span>{game.clue.word}</span>
@@ -126,11 +179,11 @@ export function Game({ game, onCardClick, revealAll }: GameProps) {
         <div className="grid grid-cols-5 gap-4 mb-8">
           {shuffledIndices.map((realIndex) => {
             const card = game.cards[realIndex];
-            const isRevealed = card.revealed || !!revealAll;
+            const isRevealed = revealedCards[realIndex] || !!revealAll;
             return (
               <Button
                 key={realIndex}
-                onClick={() => onCardClick(realIndex)}
+                onClick={() => handleCardClick(realIndex)}
                 className={`
                   h-24 text-lg font-semibold border-2 transition-all duration-200
                   ${getCardStyle(card, isRevealed)}
