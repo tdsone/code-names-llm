@@ -87,7 +87,7 @@ export function Game({ game, onCardClick, revealAll }: GameProps) {
   };
 
   const getCurrentTeamDisplay = () => {
-    return game.currentTeam === "red" ? "Red Team" : "Blue Team";
+    return game.currentTeam === "red" ? "Red" : "Blue";
   };
 
   const [revealedCards, setRevealedCards] = useState<boolean[]>(() =>
@@ -155,35 +155,65 @@ export function Game({ game, onCardClick, revealAll }: GameProps) {
           </h1>
         </div>
 
+        {/* Large screen Turn Info above board */}
+        <div className="hidden lg:flex justify-center items-center gap-6 w-full text-lg font-semibold text-gray-700 dark:text-gray-300 mb-4">
+          <span>{getCurrentTeamDisplay()} {getPhaseDisplay()}</span>
+          {game.clue && game.phase === "guessing" && (
+            <div className="flex items-center gap-3 px-4 py-2 bg-indigo-100 dark:bg-indigo-900/40 border border-indigo-300 dark:border-indigo-700 rounded-lg shadow-sm">
+              <span className="text-xl font-semibold text-indigo-800 dark:text-indigo-200">
+                {game.clue.word}
+              </span>
+              <span className="inline-block px-2 py-0.5 rounded-full bg-indigo-300 text-white font-semibold text-lg">
+                {game.clue.number}
+              </span>
+            </div>
+          )}
+        </div>
+
         {/* Team Roles and Scores + Game Board Layout */}
         <div className="flex flex-col lg:flex-row gap-6 mb-6 w-full">
           {/* Left Column: Teams */}
           <div className="flex flex-row gap-x-4 lg:flex-col justify-between lg:justify-start lg:w-1/5 w-full">
             {/* Red Team */}
-            <div className="flex-1 lg:w-full bg-red-100 dark:bg-red-900/30 px-4 py-2 rounded-lg mb-4 lg:mb-6">
-              <div className="text-red-600 dark:text-red-400 font-semibold mb-1">Red</div>
+            <div className={`flex-1 lg:w-full px-4 py-2 rounded-lg mb-4 lg:mb-6 ${game.currentTeam === "red" ? "bg-red-500 dark:bg-red-800" : "bg-red-100 dark:bg-red-900/30"}`}>
+              <div className={`${game.currentTeam === "red" ? "text-white" : "text-red-600 dark:text-red-400"} font-semibold mb-1`}>Red</div>
               {game.teams.red.players.map((player) => (
-                <div key={player.id} className="text-sm text-red-500 dark:text-red-300 mb-1">
+                <div key={player.id} className={`text-sm mb-1 ${game.currentTeam === "red" ? "text-white font-semibold" : "text-red-500 dark:text-red-300"}`}>
                   {player.role.charAt(0).toUpperCase() + player.role.slice(1)}: {player.agent === "ai" ? "AI" : "🫵 You"}
                 </div>
               ))}
-              <div className="text-sm text-red-500 dark:text-red-300">
+              <div className={`text-sm ${game.currentTeam === "red" ? "text-white font-semibold" : "text-red-500 dark:text-red-300"}`}>
                 {game.cards.filter((card) => card.type === "red" && !card.revealed).length} remaining
               </div>
             </div>
 
             {/* Blue Team */}
-            <div className="flex-1 lg:w-full bg-blue-100 dark:bg-blue-900/30 px-4 py-2 rounded-lg mb-4 lg:mb-6">
-              <div className="text-blue-600 dark:text-blue-400 font-semibold mb-1">Blue</div>
+            <div className={`flex-1 lg:w-full px-4 py-2 rounded-lg mb-4 lg:mb-6 ${game.currentTeam === "blue" ? "bg-blue-500 dark:bg-blue-800" : "bg-blue-100 dark:bg-blue-900/30"}`}>
+              <div className={`${game.currentTeam === "blue" ? "text-white font-bold" : "text-blue-600 dark:text-blue-400"} font-semibold mb-1`}>Blue</div>
               {game.teams.blue.players.map((player) => (
-                <div key={player.id} className="text-sm text-blue-500 dark:text-blue-300 mb-1">
+                <div key={player.id} className={`text-sm mb-1 ${game.currentTeam === "blue" ? "text-white font-semibold" : "text-blue-500 dark:text-blue-300"}`}>
                   {player.role.charAt(0).toUpperCase() + player.role.slice(1)}: {player.agent === "ai" ? "AI" : "🫵 You"}
                 </div>
               ))}
-              <div className="text-sm text-blue-500 dark:text-blue-300">
+              <div className={`text-sm ${game.currentTeam === "blue" ? "text-white font-semibold" : "text-blue-500 dark:text-blue-300"}`}>
                 {game.cards.filter((card) => card.type === "blue" && !card.revealed).length} remaining
               </div>
             </div>
+          </div>
+
+          {/* Center: Turn Info and Clue (only for small screens) */}
+          <div className="flex justify-center items-center gap-6 lg:hidden w-full text-lg font-semibold text-gray-700 dark:text-gray-300 mb-4">
+            <span>{getCurrentTeamDisplay()} {getPhaseDisplay()}</span>
+            {game.clue && game.phase === "guessing" && (
+              <div className="flex items-center gap-3 px-4 py-2 bg-indigo-100 dark:bg-indigo-900/40 border border-indigo-300 dark:border-indigo-700 rounded-lg shadow-sm">
+                <span className="text-xl font-semibold text-indigo-800 dark:text-indigo-200">
+                  {game.clue.word}
+                </span>
+                <span className="inline-block px-2 py-0.5 rounded-full bg-indigo-300 text-white font-semibold text-lg">
+                  {game.clue.number}
+                </span>
+              </div>
+            )}
           </div>
 
           {/* Game Board */}
@@ -208,19 +238,6 @@ export function Game({ game, onCardClick, revealAll }: GameProps) {
               );
             })}
           </div>
-        </div>
-
-        {/* Current Turn Info and Clue */}
-        <div className="flex justify-center items-center gap-6 mb-6 text-lg font-semibold text-gray-700 dark:text-gray-300">
-          <span>{getCurrentTeamDisplay()} {getPhaseDisplay()}</span>
-          {game.clue && game.phase === "guessing" && (
-            <span className="flex items-center gap-2 text-xl">
-              <span>{game.clue.word}</span>
-              <span className="inline-block px-2 py-0.5 rounded-full bg-gray-200">
-                {game.clue.number}
-              </span>
-            </span>
-          )}
         </div>
 
         {game.phase === "waiting" && (
