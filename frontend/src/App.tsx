@@ -86,14 +86,6 @@ const human = currentGame
   if (currentGame) {
     return (
       <div className="flex flex-col items-center mt-6">
-        {currentGame.clue && currentGame.phase === "guessing" && (
-          <div className="flex items-center gap-3 mb-4 text-xl font-semibold">
-            <span>{currentGame.clue.word}</span>
-            <span className="inline-block px-2 py-0.5 rounded-full bg-gray-200">
-              {currentGame.clue.number}
-            </span>
-          </div>
-        )}
         {human && (
           <div className="mb-3 text-lg text-gray-800 dark:text-gray-100 font-medium">
             You are the <span className="font-bold">{role}</span> — the AI is

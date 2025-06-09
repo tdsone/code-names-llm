@@ -64,22 +64,63 @@ export function Game({ game, onCardClick, revealAll }: GameProps) {
           <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-2">
             Code Names
           </h1>
-          <div className="space-y-2">
-            <p className="text-lg font-semibold text-gray-700 dark:text-gray-300">
-              Current Turn:{" "}
-              <span
-                className={`${
-                  game.currentTeam === "red" ? "text-red-600" : "text-blue-600"
-                }`}
-              >
-                {getCurrentTeamDisplay()}
-              </span>
-            </p>
-            <p className="text-md text-gray-600 dark:text-gray-400">
-              {getPhaseDisplay()}
-            </p>
+        </div>
+
+        {/* Team Roles and Scores */}
+        <div className="flex justify-between mb-6">
+          {/* Red Team */}
+          <div className="bg-red-100 dark:bg-red-900/30 px-4 py-2 rounded-lg w-1/2 mr-2">
+            <div className="text-red-600 dark:text-red-400 font-semibold mb-1">
+              Red Team
+            </div>
+            {game.teams.red.players.map((player) => (
+              <div key={player.id} className="text-sm text-red-500 dark:text-red-300 mb-1">
+                {player.role.charAt(0).toUpperCase() + player.role.slice(1)} ({player.agent === "ai" ? "AI" : "Human"})
+              </div>
+            ))}
+            <div className="text-sm text-red-500 dark:text-red-300">
+              {
+                game.cards.filter(
+                  (card) => card.type === "red" && !card.revealed
+                ).length
+              } remaining
+            </div>
+          </div>
+
+          {/* Blue Team */}
+          <div className="bg-blue-100 dark:bg-blue-900/30 px-4 py-2 rounded-lg w-1/2 ml-2">
+            <div className="text-blue-600 dark:text-blue-400 font-semibold mb-1">
+              Blue Team
+            </div>
+            {game.teams.blue.players.map((player) => (
+              <div key={player.id} className="text-sm text-blue-500 dark:text-blue-300 mb-1">
+                {player.role.charAt(0).toUpperCase() + player.role.slice(1)} ({player.agent === "ai" ? "AI" : "Human"})
+              </div>
+            ))}
+            <div className="text-sm text-blue-500 dark:text-blue-300">
+              {
+                game.cards.filter(
+                  (card) => card.type === "blue" && !card.revealed
+                ).length
+              } remaining
+            </div>
           </div>
         </div>
+
+        {/* Current Turn Info and Clue */}
+        <div className="flex justify-center items-center gap-6 mb-6 text-lg font-semibold text-gray-700 dark:text-gray-300">
+          <span>{getCurrentTeamDisplay()} {getPhaseDisplay()}:</span>
+          {game.clue && game.phase === "guessing" && (
+            <span className="flex items-center gap-2 text-xl">
+              <span>{game.clue.word}</span>
+              <span className="inline-block px-2 py-0.5 rounded-full bg-gray-200">
+                {game.clue.number}
+              </span>
+            </span>
+          )}
+        </div>
+
+        <div className="flex flex-col items-center mt-6">
 
         {/* Game Board */}
         <div className="grid grid-cols-5 gap-4 mb-8">
@@ -107,6 +148,7 @@ export function Game({ game, onCardClick, revealAll }: GameProps) {
             );
           })}
         </div>
+        </div> {/* Close flex-col container */}
 
         {/* Game Stats */}
         <div className="flex justify-center space-x-8 text-center">
