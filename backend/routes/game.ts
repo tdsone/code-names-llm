@@ -34,7 +34,7 @@ router.get("/", async (req: Request, res: Response) => {
             },
             {
               type: "input_text",
-              text: `Generate a JSON array of 25 unique Codenames cards. Each card should have:
+              text: `Generate a JSON array of 25 (NOT MORE THAN 25) unique Codenames cards. Each card should have:
 - a word (string),
 - a type (one of "red", "blue", "neutral", "assassin").
 Make sure there are ${redCount} red, ${blueCount} blue, 7 neutral, 1 assassin. NO team should have MORE THAN 9 CARDS! Only one team can have 9 cards!

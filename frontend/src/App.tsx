@@ -5,9 +5,20 @@ import type { Game as GameType } from "../../shared/types";
 import { useState, useEffect } from "react";
 import { isAISpymasterTurn } from "../utils/isAISpymaster";
 import { ClueForm } from "./components/ClueForm";
+import search from './assets/search.svg';
+
+function LoadingSpinner() {
+  return (
+    <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-b from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800">
+      <img src={search} alt="Loading" className="animate-spin h-12 w-12 text-indigo-600" />
+      <p className="mt-4 text-lg text-gray-700 dark:text-gray-200">Looking for the exciting set of words...</p>
+    </div>
+  );
+}
 
 function App() {
   const [currentGame, setCurrentGame] = useState<GameType | null>(null);
+  const [loading, setLoading] = useState(false);
 const human = currentGame
   ? [
       ...currentGame.teams.red.players.map((p) => ({ ...p, team: "red" as const })),
@@ -29,12 +40,15 @@ const human = currentGame
   human?.team === currentGame.currentTeam
   
   const handleStartNewGame = async () => {
+    setLoading(true);
     try {
       const response = await fetch("/api/game");
       const data = await response.json();
       setCurrentGame(data.game);
     } catch (error) {
       console.error("Failed to start new game:", error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -82,6 +96,10 @@ const human = currentGame
       })().catch(console.error);
     }
   }, [currentGame]);
+
+  if (loading) {
+    return <LoadingSpinner />;
+  }
 
   if (currentGame) {
     return (

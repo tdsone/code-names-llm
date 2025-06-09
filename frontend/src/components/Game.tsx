@@ -11,6 +11,9 @@ interface GameProps {
 export function Game({ game, onCardClick, revealAll }: GameProps) {
   const [guessResult, setGuessResult] = useState<"right" | "wrong" | null>(null);
   const [turnPassed, setTurnPassed] = useState(false);
+  const [previousCards, setPreviousCards] = useState<Card[]>(game.cards);
+  // Track the previous team that made a move
+  const [previousTeam, setPreviousTeam] = useState<GameType["currentTeam"]>(game.currentTeam);
 
   useEffect(() => {
     if (guessResult) {
@@ -30,6 +33,29 @@ export function Game({ game, onCardClick, revealAll }: GameProps) {
       return () => clearTimeout(timer);
     }
   }, [turnPassed]);
+
+  useEffect(() => {
+    const newRevealedIndex = game.cards.findIndex(
+      (card, i) => card.revealed && !previousCards[i]?.revealed
+    );
+
+    if (newRevealedIndex !== -1) {
+      const newCard = game.cards[newRevealedIndex];
+      const isCorrect = newCard.type === previousTeam;
+      setGuessResult(isCorrect ? "right" : "wrong");
+
+      if (!isCorrect) {
+        setTimeout(() => setTurnPassed(true), 1000);
+      }
+    }
+
+    setPreviousCards(game.cards);
+  }, [game.cards, previousTeam]);
+
+  // Update previousTeam to the team before the current one
+  useEffect(() => {
+    setPreviousTeam(game.currentTeam);
+  }, [game.currentTeam]);
 
   const shuffledIndices = useMemo(() => {
     const indices = [...Array(game.cards.length).keys()];
@@ -115,7 +141,7 @@ export function Game({ game, onCardClick, revealAll }: GameProps) {
         {/* Game Header */}
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-2">
-            Code Names
+            Telepathy two
           </h1>
         </div>
 
@@ -124,11 +150,11 @@ export function Game({ game, onCardClick, revealAll }: GameProps) {
           {/* Red Team */}
           <div className="bg-red-100 dark:bg-red-900/30 px-4 py-2 rounded-lg w-1/2 mr-2">
             <div className="text-red-600 dark:text-red-400 font-semibold mb-1">
-              Red Team
+              Red
             </div>
             {game.teams.red.players.map((player) => (
               <div key={player.id} className="text-sm text-red-500 dark:text-red-300 mb-1">
-                {player.role.charAt(0).toUpperCase() + player.role.slice(1)} ({player.agent === "ai" ? "AI" : "Human"})
+                {player.role.charAt(0).toUpperCase() + player.role.slice(1)}: {player.agent === "ai" ? "AI" : "🫵 You"}
               </div>
             ))}
             <div className="text-sm text-red-500 dark:text-red-300">
@@ -143,11 +169,11 @@ export function Game({ game, onCardClick, revealAll }: GameProps) {
           {/* Blue Team */}
           <div className="bg-blue-100 dark:bg-blue-900/30 px-4 py-2 rounded-lg w-1/2 ml-2">
             <div className="text-blue-600 dark:text-blue-400 font-semibold mb-1">
-              Blue Team
+              Blue
             </div>
             {game.teams.blue.players.map((player) => (
               <div key={player.id} className="text-sm text-blue-500 dark:text-blue-300 mb-1">
-                {player.role.charAt(0).toUpperCase() + player.role.slice(1)} ({player.agent === "ai" ? "AI" : "Human"})
+                {player.role.charAt(0).toUpperCase() + player.role.slice(1)}: {player.agent === "ai" ? "AI" : "🫵 You"}
               </div>
             ))}
             <div className="text-sm text-blue-500 dark:text-blue-300">

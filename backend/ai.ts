@@ -42,7 +42,7 @@ const blueCount = game.currentTeam === "blue" ? 9 : 8;
     You are the spymaster for the ${team.toUpperCase()} team.
     Only clue your own ${team} words; never clue words that are ${otherTeam},
     neutral, or assassin.  Prefer clues covering 4–5 of your own words. Don't be afraid to use unusual words. Be as creative as possible.
-    Respond with RAW JSON only (no markdown fences):
+    Respond with RAW JSON only (no markdown fences), the clue word should only contain one word and nothing else:
     { "word": "<clue>", "number": <n> }`.trim();
 
   const payload = {
