@@ -136,29 +136,29 @@ export async function makeAIGuesses(game: GameType): Promise<void> {
   let turnShouldEnd = false;
 
   for (const index of result.guesses) {
-    if (!game.cards[index].revealed) {
-      game.cards[index].revealed = true;
-      game.guessesRemaining!--;
+  await new Promise((resolve) => setTimeout(resolve, 1000)); // 1 second delay
 
-      const card = game.cards[index];
-      if (card.type !== game.currentTeam) {
-        // Wrong guess — end turn
-        turnShouldEnd = true;
-        break;
-      }
+  if (!game.cards[index].revealed) {
+    game.cards[index].revealed = true;
+    game.guessesRemaining!--;
 
-      if ((card as { type: "assassin" | "neutral" | "red" | "blue" }).type === "assassin") {
-        // Game over logic could go here
-        game.phase = "finished";
-        return;
-      }
+    const card = game.cards[index];
+    if (card.type !== game.currentTeam) {
+      turnShouldEnd = true;
+      break;
+    }
 
-      if (game.guessesRemaining! <= 0) {
-        turnShouldEnd = true;
-        break;
-      }
+    if (card.type === "assassin" as typeof card.type) {
+      game.phase = "finished";
+      return;
+    }
+
+    if (game.guessesRemaining! <= 0) {
+      turnShouldEnd = true;
+      break;
     }
   }
+}
 
   if (turnShouldEnd) {
     game.currentTeam = game.currentTeam === "red" ? "blue" : "red";
