@@ -1,14 +1,27 @@
 import { useMemo, useState, useEffect } from "react";
 import type { Card, Game as GameType } from "../../../shared/types";
 import { Button } from "./ui/button";
+import { ClueForm } from "./ClueForm";
 
 interface GameProps {
   game: GameType;
   onCardClick: (cardIndex: number) => void;
   revealAll?: boolean;
+  isHumanSpymasterTurn?: boolean;
+  humanRole?: string;
+  showHumanInfo?: boolean;
+  onSubmitClue?: ({ word, number }: { word: string; number: number }) => void;
 }
 
-export function Game({ game, onCardClick, revealAll }: GameProps) {
+export function Game({
+  game,
+  onCardClick,
+  revealAll,
+  isHumanSpymasterTurn,
+  humanRole,
+  showHumanInfo,
+  onSubmitClue,
+}: GameProps) {
   const [guessResult, setGuessResult] = useState<"right" | "wrong" | null>(null);
   const [turnPassed, setTurnPassed] = useState(false);
   const [previousCards, setPreviousCards] = useState<Card[]>(game.cards);
@@ -139,7 +152,7 @@ export function Game({ game, onCardClick, revealAll }: GameProps) {
     <div className="min-h-screen w-full bg-gradient-to-b from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 p-4">
       <div className="max-w-6xl mx-auto">
         {guessResult && (
-          <div className={`absolute top-4 left-1/2 transform -translate-x-1/2 px-6 py-2 rounded text-white text-xl font-bold shadow-md z-50 transition-opacity duration-500 ${guessResult === "right" ? "bg-green-600" : "bg-red-600"}`}>
+          <div className={`absolute top-10 left-1/2 transform -translate-x-1/2 px-6 py-2 rounded text-white text-xl font-bold shadow-md z-50 transition-opacity duration-500 ${guessResult === "right" ? "bg-green-600" : "bg-red-600"}`}>
             {guessResult === "right" ? "Right Guess!" : "Wrong Guess!"}
           </div>
         )}
@@ -238,11 +251,19 @@ export function Game({ game, onCardClick, revealAll }: GameProps) {
               );
             })}
           </div>
+          
         </div>
-
-        {game.phase === "waiting" && (
-          <div className="mb-4 px-4 py-2 bg-indigo-600 text-white font-semibold rounded shadow text-center">
-            {getPhaseDisplay()}
+        {/* Clue submission UI, directly after the game cards */}
+        {(showHumanInfo || isHumanSpymasterTurn) && (
+          <div className="mb-8 flex flex-col items-center">
+            {showHumanInfo && humanRole && (
+              <div className="text-lg text-gray-800 dark:text-gray-100 font-medium mb-4">
+                You are the <span className="font-bold">{humanRole}</span> — send AI a clue.
+              </div>
+            )}
+            {isHumanSpymasterTurn && onSubmitClue && (
+              <ClueForm onSubmit={onSubmitClue} />
+            )}
           </div>
         )}
 

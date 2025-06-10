@@ -4,7 +4,6 @@ import { Game } from "./components/Game";
 import type { Game as GameType } from "../../shared/types";
 import { useState, useEffect } from "react";
 import { isAISpymasterTurn } from "../utils/isAISpymaster";
-import { ClueForm } from "./components/ClueForm";
 import search from './assets/search.svg';
 
 function LoadingSpinner() {
@@ -33,11 +32,7 @@ const human = currentGame
 
   const role = human?.role === "spymaster" ? "Spymaster" : "Operative";
   const revealAll = human?.role === "spymaster";
-  const isHumanSpymasterTurn =
-  currentGame &&
-  human?.role === "spymaster" &&
-  currentGame.phase === "waiting" &&
-  human?.team === currentGame.currentTeam
+  
   
   const handleStartNewGame = async () => {
     setLoading(true);
@@ -104,30 +99,32 @@ const human = currentGame
   if (currentGame) {
     return (
       <div className="flex flex-col items-center mt-6">
-        {human && (
-          <div className="mb-3 text-lg text-gray-800 dark:text-gray-100 font-medium">
-            You are the <span className="font-bold">{role}</span> — the AI is
-            your {role === "Spymaster" ? "Operative" : "Spymaster"}.
-          </div>
-        )}
-        {isHumanSpymasterTurn && (
-          <ClueForm
-            onSubmit={async ({ word, number }) => {
-              try {
-                const res = await fetch(`/api/game/${currentGame.id}/clue`, {
-                  method: "POST",
-                  headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify({ word, number }),
-                });
-                const { game } = await res.json();
-                setCurrentGame(game);
-              } catch (err) {
-                console.error("Clue submission failed", err);
-              }
-            }}
-          />
-        )}
-        <Game game={currentGame} onCardClick={handleCardClick} revealAll={revealAll} />
+        <Game
+          game={currentGame}
+          onCardClick={handleCardClick}
+          revealAll={revealAll}
+          isHumanSpymasterTurn={!!(
+            currentGame &&
+            human?.role === "spymaster" &&
+            currentGame.phase === "waiting" &&
+            human?.team === currentGame.currentTeam
+          )}
+          humanRole={role}
+          showHumanInfo={!!human}
+          onSubmitClue={async ({ word, number }) => {
+            try {
+              const res = await fetch(`/api/game/${currentGame.id}/clue`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ word, number }),
+              });
+              const { game } = await res.json();
+              setCurrentGame(game);
+            } catch (err) {
+              console.error("Clue submission failed", err);
+            }
+          }}
+        />
       </div>
     );
   }
@@ -137,7 +134,7 @@ const human = currentGame
       <div className="text-center space-y-8 p-8">
         <div className="space-y-4">
           <h1 className="text-6xl font-bold text-gray-900 dark:text-white">
-            Code Names
+            Telepathy two
           </h1>
           <p className="text-xl text-gray-600 dark:text-gray-300 max-w-md">
             Team up with AI in the classic word association game
@@ -157,4 +154,3 @@ const human = currentGame
 }
 
 export default App;
- 
