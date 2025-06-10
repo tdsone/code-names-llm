@@ -1,12 +1,16 @@
-#!/bin/bash
-
-set -e  # Exit immediately if a command exits with a non-zero status
+#!/usr/bin/env bash
+set -e
 
 cd frontend
-npm install
-npm run build
+npm ci        # or npm install
+npm run build # produces frontend/dist
 
-npm run build
+# ─── Move build to dist/public ───────────────────────────────────
+rm -rf ../dist/public           # clean old build
+mkdir -p ../dist/public
+cp -R dist/* ../dist/public/
+# ─────────────────────────────────────────────────────────────────
+
 cd ../backend
-npm install
+npm ci
 npm run build
