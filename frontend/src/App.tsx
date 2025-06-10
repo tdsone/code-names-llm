@@ -1,6 +1,7 @@
 import "./App.css";
 import { Button } from "./components/ui/button";
 import { Game } from "./components/Game";
+import GameInput from "./components/GameInput";
 import type { Game as GameType } from "../../shared/types";
 import { useState, useEffect } from "react";
 import { isAISpymasterTurn } from "../utils/isAISpymaster";
@@ -18,6 +19,8 @@ function LoadingSpinner() {
 function App() {
   const [currentGame, setCurrentGame] = useState<GameType | null>(null);
   const [loading, setLoading] = useState(false);
+  const [showGameInput, setShowGameInput] = useState(false);
+
 const human = currentGame
   ? [
       ...currentGame.teams.red.players.map((p) => ({ ...p, team: "red" as const })),
@@ -34,10 +37,19 @@ const human = currentGame
   const revealAll = human?.role === "spymaster";
   
   
-  const handleStartNewGame = async () => {
+  const handleStartNewGame = () => {
+    setShowGameInput(true);
+  };
+
+  const handlePlayersSubmit = async (gameSetup: any) => {
+    setShowGameInput(false);
     setLoading(true);
     try {
-      const response = await fetch("/api/game");
+      const response = await fetch("/api/game", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(gameSetup),
+      });
       const data = await response.json();
       setCurrentGame(data.game);
     } catch (error) {
@@ -130,7 +142,7 @@ const human = currentGame
   }
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-b from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800">
+    <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-b from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 relative">
       <div className="text-center space-y-8 p-8">
         <div className="space-y-4">
           <h1 className="text-6xl font-bold text-gray-900 dark:text-white">
@@ -149,6 +161,13 @@ const human = currentGame
           Start New Game
         </Button>
       </div>
+
+      {showGameInput && (
+        <GameInput
+          onPlayersSubmit={handlePlayersSubmit}
+          onClose={() => setShowGameInput(false)}
+        />
+      )}
     </div>
   );
 }

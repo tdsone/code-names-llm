@@ -20,7 +20,7 @@ const startingTeam = Math.random() < 0.5 ? "red" : "blue";
 const redCount = startingTeam === "red" ? 9 : 8;
 const blueCount = startingTeam === "blue" ? 9 : 8;
 
-router.get("/", async (req: Request, res: Response) => {
+router.post("/", async (req: Request, res: Response) => {
   try {
     const payload = {
       model: "gpt-4.1",
@@ -69,55 +69,64 @@ Respond with ONLY raw JSON. Do NOT include markdown or explanations.`,
       revealed: false,
     }));    
 
-    // --- build initial players & teams -----------------------------------
-    // randomly decide if humans are spymasters or operatives
-    const humansAreSpymasters = Math.random() < 0.5;
+    const { teams } = req.body || {};
+    let redTeam: TeamType;
+    let blueTeam: TeamType;
 
-    const redTeam: TeamType = {
-      color: "red",
-      players: [
-        {
-          id: uuidv4(),
-          name: humansAreSpymasters ? "Red Human" : "Red Bot",
-          agent: humansAreSpymasters ? "human" : "ai",
-          role: "spymaster",
-        } as PlayerType,
-        {
-          id: humansAreSpymasters ? "ai-red" : uuidv4(),
-          name: humansAreSpymasters ? "Red Bot" : "Red Human",
-          agent: humansAreSpymasters ? "ai" : "human",
-          role: "operative",
-        } as PlayerType,
-      ],
-    };
+    if (teams && teams.red && teams.blue) {
+      redTeam = teams.red;
+      blueTeam = teams.blue;
+    } else {
+      // fallback to default logic
+      // randomly decide if humans are spymasters or operatives
+      const humansAreSpymasters = Math.random() < 0.5;
 
-    const blueTeam: TeamType = {
-      color: "blue",
-      players: [
-        {
-          id: uuidv4(),
-          name: humansAreSpymasters ? "Blue Human" : "Blue Bot",
-          agent: humansAreSpymasters ? "human" : "ai",
-          role: "spymaster",
-        } as PlayerType,
-        {
-          id: humansAreSpymasters ? "ai-blue" : uuidv4(),
-          name: humansAreSpymasters ? "Blue Bot" : "Blue Human",
-          agent: humansAreSpymasters ? "ai" : "human",
-          role: "operative",
-        } as PlayerType,
-      ],
-    };
+      redTeam = {
+        color: "red",
+        players: [
+          {
+            id: uuidv4(),
+            name: humansAreSpymasters ? "Red Human" : "Red Bot",
+            agent: humansAreSpymasters ? "human" : "ai",
+            role: "spymaster",
+          } as PlayerType,
+          {
+            id: humansAreSpymasters ? "ai-red" : uuidv4(),
+            name: humansAreSpymasters ? "Red Bot" : "Red Human",
+            agent: humansAreSpymasters ? "ai" : "human",
+            role: "operative",
+          } as PlayerType,
+        ],
+      };
 
-    const teams: { red: TeamType; blue: TeamType } = {
+      blueTeam = {
+        color: "blue",
+        players: [
+          {
+            id: uuidv4(),
+            name: humansAreSpymasters ? "Blue Human" : "Blue Bot",
+            agent: humansAreSpymasters ? "human" : "ai",
+            role: "spymaster",
+          } as PlayerType,
+          {
+            id: humansAreSpymasters ? "ai-blue" : uuidv4(),
+            name: humansAreSpymasters ? "Blue Bot" : "Blue Human",
+            agent: humansAreSpymasters ? "ai" : "human",
+            role: "operative",
+          } as PlayerType,
+        ],
+      };
+    }
+
+    const teamsObj: { red: TeamType; blue: TeamType } = {
       red: redTeam,
       blue: blueTeam,
     };
-
+    
     const game: GameType = {
       id: uuidv4(),
       cards,
-      teams,
+      teams: teamsObj,
       currentTeam: startingTeam,
       phase: "waiting",
       createdAt: new Date(),

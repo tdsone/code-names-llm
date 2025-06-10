@@ -192,7 +192,7 @@ export function Game({
               <div className={`${game.currentTeam === "red" ? "text-white" : "text-red-600 dark:text-red-400"} font-semibold mb-1`}>Red</div>
               {game.teams.red.players.map((player) => (
                 <div key={player.id} className={`text-sm mb-1 ${game.currentTeam === "red" ? "text-white font-semibold" : "text-red-500 dark:text-red-300"}`}>
-                  {player.role.charAt(0).toUpperCase() + player.role.slice(1)}: {player.agent === "ai" ? "AI" : "🫵 You"}
+                  {player.role.charAt(0).toUpperCase() + player.role.slice(1)}: {player.agent === "ai" ? "AI" : `🫵 ${player.name}`}
                 </div>
               ))}
               <div className={`text-sm ${game.currentTeam === "red" ? "text-white font-semibold" : "text-red-500 dark:text-red-300"}`}>
@@ -205,7 +205,7 @@ export function Game({
               <div className={`${game.currentTeam === "blue" ? "text-white font-bold" : "text-blue-600 dark:text-blue-400"} font-semibold mb-1`}>Blue</div>
               {game.teams.blue.players.map((player) => (
                 <div key={player.id} className={`text-sm mb-1 ${game.currentTeam === "blue" ? "text-white font-semibold" : "text-blue-500 dark:text-blue-300"}`}>
-                  {player.role.charAt(0).toUpperCase() + player.role.slice(1)}: {player.agent === "ai" ? "AI" : "🫵 You"}
+                  {player.role.charAt(0).toUpperCase() + player.role.slice(1)}: {player.agent === "ai" ? "AI" : `🫵 ${player.name}`}
                 </div>
               ))}
               <div className={`text-sm ${game.currentTeam === "blue" ? "text-white font-semibold" : "text-blue-500 dark:text-blue-300"}`}>
