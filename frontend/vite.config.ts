@@ -7,7 +7,7 @@ import react from "@vitejs/plugin-react";
 export default defineConfig({
   plugins: [react(), tailwindcss()],
   build: {
-    outDir: '../backend/public',
+    outDir: '../backend/dist/public',
     emptyOutDir: true,
   },
   resolve: {
