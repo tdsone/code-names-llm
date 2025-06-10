@@ -8,6 +8,7 @@ export default defineConfig({
   plugins: [react(), tailwindcss()],
   build: {
     outDir: '../backend/public',
+    emptyOutDir: true,
   },
   resolve: {
     alias: {
