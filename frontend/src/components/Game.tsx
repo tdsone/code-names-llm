@@ -82,7 +82,7 @@ export function Game({
 
   const getCardStyle = (card: Card, isRevealed: boolean) => {
     if (!isRevealed) {
-      return "bg-gray-100 hover:bg-gray-200 border-gray-300 text-gray-900";
+      return "bg-white border-gray-300 text-gray-900";
     }
 
     switch (card.type) {
@@ -245,7 +245,7 @@ export function Game({
                   onClick={() => handleCardClick(realIndex)}
                   className={`
                     h-24 text-lg font-semibold border-2 transition-all duration-200
-                    ${getCardStyle(card, isRevealed)}
+                    ${getCardStyle(card, isRevealed)} ${!isRevealed && card.type === "red" ? "border-[#F05F45]" : ""} ${!isRevealed && card.type === "blue" ? "border-[#6294D8]" : ""}
                     ${!card.revealed ? "hover:scale-105 cursor-pointer" : "cursor-default"}
                   `}
                   disabled={card.revealed || game.phase === "finished"}

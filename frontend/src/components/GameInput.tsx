@@ -54,7 +54,7 @@ export default function GameSetup({ onPlayersSubmit, onClose }: { onPlayersSubmi
 
   return (
     <div className="fixed inset-0 z-40 flex items-center justify-center backdrop-blur-sm bg-transparent pointer-events-auto">
-      <div className="relative z-50 bg-white p-6 rounded shadow-lg w-full max-w-md pointer-events-auto">
+      <div className="relative z-50 bg-[#FFF6F5] p-6 rounded shadow-lg w-full max-w-md pointer-events-auto">
         <button
           onClick={onClose}
           className="absolute top-3 right-3 text-gray-500 hover:text-gray-700 z-50"
@@ -65,7 +65,7 @@ export default function GameSetup({ onPlayersSubmit, onClose }: { onPlayersSubmi
         </button>
         <h2 className="text-lg font-semibold mb-4 text-center">Game Setup</h2>
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
+          <div className="bg-[#FFEAE7] p-4 rounded">
             <h3 className="font-medium">Red Player</h3>
             <input
               className="w-full p-2 border rounded"
@@ -84,7 +84,7 @@ export default function GameSetup({ onPlayersSubmit, onClose }: { onPlayersSubmi
             </select>
           </div>
 
-          <div>
+          <div className="bg-[#E6EEF9] p-4 rounded">
             <h3 className="font-medium">Blue Player</h3>
             <input
               className="w-full p-2 border rounded"
@@ -104,8 +104,123 @@ export default function GameSetup({ onPlayersSubmit, onClose }: { onPlayersSubmi
           </div>
 
           <div className="flex justify-end">
-            <button type="submit" className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+            <button type="submit" className="bg-[#6294D8] text-white px-4 py-2 rounded hover:bg-[#4F7FC0]">
               Continue
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
+export function TeamInputModal({ onSubmit, onClose }: { onSubmit: (data: any) => void; onClose: () => void }) {
+  const [teamName, setTeamName] = useState('');
+  const [teamColor, setTeamColor] = useState('red');
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    onSubmit({ teamName, teamColor });
+  };
+
+  return (
+    <div className="fixed inset-0 z-40 flex items-center justify-center backdrop-blur-sm bg-transparent pointer-events-auto">
+      <div className="relative z-50 bg-[#FFF6F5] p-6 rounded shadow-lg w-full max-w-md pointer-events-auto">
+        <button
+          onClick={onClose}
+          className="absolute top-3 right-3 text-gray-500 hover:text-gray-700 z-50"
+          type="button"
+          aria-label="Close"
+        >
+          ×
+        </button>
+        <h2 className="text-lg font-semibold mb-4 text-center">Team Input</h2>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <h3 className="font-medium">Team Name</h3>
+            <input
+              className="w-full p-2 border rounded"
+              placeholder="Enter team name"
+              value={teamName}
+              onChange={(e) => setTeamName(e.target.value)}
+              required
+            />
+          </div>
+
+          <div>
+            <h3 className="font-medium">Team Color</h3>
+            <select
+              className="w-full p-2 border rounded mt-2"
+              value={teamColor}
+              onChange={(e) => setTeamColor(e.target.value)}
+            >
+              <option value="red">Red</option>
+              <option value="blue">Blue</option>
+              <option value="green">Green</option>
+              <option value="yellow">Yellow</option>
+            </select>
+          </div>
+
+          <div className="flex justify-end">
+            <button type="submit" className="bg-[#6294D8] text-white px-4 py-2 rounded hover:bg-[#4F7FC0]">
+              Save Team
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
+export function SettingsModal({ settings, onSave, onClose }: { settings: any; onSave: (settings: any) => void; onClose: () => void }) {
+  const [difficulty, setDifficulty] = useState(settings.difficulty || 'normal');
+  const [soundEnabled, setSoundEnabled] = useState(settings.soundEnabled ?? true);
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    onSave({ difficulty, soundEnabled });
+  };
+
+  return (
+    <div className="fixed inset-0 z-40 flex items-center justify-center backdrop-blur-sm bg-transparent pointer-events-auto">
+      <div className="relative z-50 bg-[#FFF6F5] p-6 rounded shadow-lg w-full max-w-md pointer-events-auto">
+        <button
+          onClick={onClose}
+          className="absolute top-3 right-3 text-gray-500 hover:text-gray-700 z-50"
+          type="button"
+          aria-label="Close"
+        >
+          ×
+        </button>
+        <h2 className="text-lg font-semibold mb-4 text-center">Settings</h2>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <h3 className="font-medium">Difficulty</h3>
+            <select
+              className="w-full p-2 border rounded"
+              value={difficulty}
+              onChange={(e) => setDifficulty(e.target.value)}
+            >
+              <option value="easy">Easy</option>
+              <option value="normal">Normal</option>
+              <option value="hard">Hard</option>
+            </select>
+          </div>
+
+          <div className="flex items-center space-x-2">
+            <input
+              id="soundEnabled"
+              type="checkbox"
+              checked={soundEnabled}
+              onChange={(e) => setSoundEnabled(e.target.checked)}
+              className="h-4 w-4"
+            />
+            <label htmlFor="soundEnabled" className="font-medium">Enable Sound</label>
+          </div>
+
+          <div className="flex justify-end">
+            <button type="submit" className="bg-[#6294D8] text-white px-4 py-2 rounded hover:bg-[#4F7FC0]">
+              Save Settings
             </button>
           </div>
         </form>
