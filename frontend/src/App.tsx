@@ -155,7 +155,7 @@ const human = currentGame
         <Button
           onClick={handleStartNewGame}
           size="lg"
-          className="text-lg px-8 py-6 h-auto"
+          className="text-lg px-8 py-6 h-auto bg-[#6294D8] hover:bg-[#4F7FC0] text-white"
         >
           Start New Game
         </Button>
