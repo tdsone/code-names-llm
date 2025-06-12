@@ -6,6 +6,7 @@ import type { Game as GameType } from "../../shared/types";
 import { useState, useEffect } from "react";
 import { isAISpymasterTurn } from "../utils/isAISpymaster";
 import search from './assets/search.svg';
+import Clu3 from './assets/Clu3.svg'
 
 function LoadingSpinner() {
   return (
@@ -145,9 +146,7 @@ const human = currentGame
     <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-b from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 relative">
       <div className="text-center space-y-8 p-8">
         <div className="space-y-4">
-          <h1 className="text-6xl font-bold text-gray-900 dark:text-white">
-            Telepathy two
-          </h1>
+          <img src={Clu3} alt="Telepathy Two logo" className="mx-auto w-48 h-auto" />
           <p className="text-xl text-gray-600 dark:text-gray-300 max-w-md">
             Team up with AI in the classic word association game
           </p>

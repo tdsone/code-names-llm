@@ -87,9 +87,9 @@ export function Game({
 
     switch (card.type) {
       case "red":
-        return "bg-red-500 text-white border-red-600";
+        return "bg-[#F05F45] text-white border-[#F05F45]";
       case "blue":
-        return "bg-blue-500 text-white border-blue-600";
+        return "bg-[#6294D8] text-white border-[#6294D8]";
       case "neutral":
         return "bg-gray-400 text-white border-gray-500";
       case "assassin":
@@ -162,11 +162,16 @@ export function Game({
           </div>
         )}
         {/* Game Header */}
-        <div className="text-left mb-8">
-          <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-2">
-            Telepathy two
-          </h1>
-        </div>
+        <header className="w-full flex justify-between items-center py-4 px-6 bg-white dark:bg-gray-900 shadow-md mb-6">
+          <div className="flex items-center space-x-4">
+            <img src="/src/assets/Clu3.svg" alt="Clu3 Logo" className="h-10 w-auto" />
+          </div>
+          <div className="flex space-x-4">
+            <Button variant="ghost">Rules</Button>
+            <Button variant="ghost">About</Button>
+            <Button>Start New Game</Button>
+          </div>
+        </header>
 
         {/* Large screen Turn Info above board */}
         <div className="hidden lg:flex justify-center items-center gap-6 w-full text-lg font-semibold text-gray-700 dark:text-gray-300 mb-4">
@@ -188,27 +193,27 @@ export function Game({
           {/* Left Column: Teams */}
           <div className="flex flex-row gap-x-4 lg:flex-col justify-between lg:justify-start lg:w-1/5 w-full">
             {/* Red Team */}
-            <div className={`flex-1 lg:w-full px-4 py-2 rounded-lg mb-4 lg:mb-6 ${game.currentTeam === "red" ? "bg-red-500 dark:bg-red-800" : "bg-red-100 dark:bg-red-900/30"}`}>
-              <div className={`${game.currentTeam === "red" ? "text-white" : "text-red-600 dark:text-red-400"} font-semibold mb-1`}>Red</div>
+            <div className={`flex-1 lg:w-full px-4 py-2 rounded-lg mb-4 lg:mb-6 ${game.currentTeam === "red" ? "bg-[#F05F45] dark:bg-[#F05F45]" : "bg-[#F05F45]/10 dark:bg-[#F05F45]/30"}`}>
+              <div className={`${game.currentTeam === "red" ? "text-white" : "text-[#F05F45] dark:text-[#F05F45]"} font-semibold mb-1`}>Red</div>
               {game.teams.red.players.map((player) => (
-                <div key={player.id} className={`text-sm mb-1 ${game.currentTeam === "red" ? "text-white font-semibold" : "text-red-500 dark:text-red-300"}`}>
+                <div key={player.id} className={`text-sm mb-1 ${game.currentTeam === "red" ? "text-white font-semibold" : "text-[#F05F45] dark:text-[#F05F45]"}`}>
                   {player.role.charAt(0).toUpperCase() + player.role.slice(1)}: {player.agent === "ai" ? "AI" : `🫵 ${player.name}`}
                 </div>
               ))}
-              <div className={`text-sm ${game.currentTeam === "red" ? "text-white font-semibold" : "text-red-500 dark:text-red-300"}`}>
+              <div className={`text-sm ${game.currentTeam === "red" ? "text-white font-semibold" : "text-[#F05F45] dark:text-[#F05F45]"}`}>
                 {game.cards.filter((card) => card.type === "red" && !card.revealed).length} remaining
               </div>
             </div>
 
             {/* Blue Team */}
-            <div className={`flex-1 lg:w-full px-4 py-2 rounded-lg mb-4 lg:mb-6 ${game.currentTeam === "blue" ? "bg-blue-500 dark:bg-blue-800" : "bg-blue-100 dark:bg-blue-900/30"}`}>
-              <div className={`${game.currentTeam === "blue" ? "text-white font-bold" : "text-blue-600 dark:text-blue-400"} font-semibold mb-1`}>Blue</div>
+            <div className={`flex-1 lg:w-full px-4 py-2 rounded-lg mb-4 lg:mb-6 ${game.currentTeam === "blue" ? "bg-[#6294D8] dark:bg-[#6294D8]" : "bg-[#6294D8]/10 dark:bg-[#6294D8]/30"}`}>
+              <div className={`${game.currentTeam === "blue" ? "text-white font-bold" : "text-[#6294D8] dark:text-[#6294D8]"} font-semibold mb-1`}>Blue</div>
               {game.teams.blue.players.map((player) => (
-                <div key={player.id} className={`text-sm mb-1 ${game.currentTeam === "blue" ? "text-white font-semibold" : "text-blue-500 dark:text-blue-300"}`}>
+                <div key={player.id} className={`text-sm mb-1 ${game.currentTeam === "blue" ? "text-white font-semibold" : "text-[#6294D8] dark:text-[#6294D8]"}`}>
                   {player.role.charAt(0).toUpperCase() + player.role.slice(1)}: {player.agent === "ai" ? "AI" : `🫵 ${player.name}`}
                 </div>
               ))}
-              <div className={`text-sm ${game.currentTeam === "blue" ? "text-white font-semibold" : "text-blue-500 dark:text-blue-300"}`}>
+              <div className={`text-sm ${game.currentTeam === "blue" ? "text-white font-semibold" : "text-[#6294D8] dark:text-[#6294D8]"}`}>
                 {game.cards.filter((card) => card.type === "blue" && !card.revealed).length} remaining
               </div>
             </div>
@@ -269,11 +274,11 @@ export function Game({
 
         {/* Game Stats */}
         <div className="flex justify-center space-x-8 text-center">
-          <div className="bg-red-100 dark:bg-red-900/30 px-4 py-2 rounded-lg">
-            <div className="text-red-600 dark:text-red-400 font-semibold">
+          <div className="bg-[#F05F45]/10 dark:bg-[#F05F45]/30 px-4 py-2 rounded-lg">
+            <div className="text-[#F05F45] dark:text-[#F05F45] font-semibold">
               Red Team
             </div>
-            <div className="text-sm text-red-500 dark:text-red-300">
+            <div className="text-sm text-[#F05F45] dark:text-[#F05F45]">
               {
                 game.cards.filter(
                   (card) => card.type === "red" && !card.revealed
@@ -282,11 +287,11 @@ export function Game({
               remaining
             </div>
           </div>
-          <div className="bg-blue-100 dark:bg-blue-900/30 px-4 py-2 rounded-lg">
-            <div className="text-blue-600 dark:text-blue-400 font-semibold">
+          <div className="bg-[#6294D8]/10 dark:bg-[#6294D8]/30 px-4 py-2 rounded-lg">
+            <div className="text-[#6294D8] dark:text-[#6294D8] font-semibold">
               Blue Team
             </div>
-            <div className="text-sm text-blue-500 dark:text-blue-300">
+            <div className="text-sm text-[#6294D8] dark:text-[#6294D8]">
               {
                 game.cards.filter(
                   (card) => card.type === "blue" && !card.revealed
