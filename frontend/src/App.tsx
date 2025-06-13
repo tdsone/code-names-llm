@@ -10,7 +10,7 @@ import Clu3 from './assets/Clu3.svg'
 
 function LoadingSpinner() {
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen relative bg-gradient-to-b from-[oklch(0.97_0_0)] to-[oklch(0.6_0.118_184.704)]">
+    <div className="flex flex-col items-center justify-center min-h-screen relative bg-gradient-to-b from-[#F05F4566] to-[#6294D866]">
       <img src={search} alt="Loading" className="animate-spin h-12 w-12 text-indigo-600" />
       <p className="mt-4 text-lg text-gray-700 dark:text-gray-200">Looking for the exciting set of words...</p>
     </div>

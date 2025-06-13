@@ -149,7 +149,7 @@ export function Game({
   };
 
   return (
-    <div className="min-h-screen w-full bg-gradient-to-b from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 p-4">
+    <div className="min-h-screen w-full bg-gradient-to-b from-[#F05F4533] to-[#6294D833] dark:from-gray-900 dark:to-gray-800 p-4">
       <div className="max-w-6xl mx-auto">
         {guessResult && (
           <div className={`absolute top-10 left-1/2 transform -translate-x-1/2 px-6 py-2 rounded text-white text-xl font-bold shadow-md z-50 transition-opacity duration-500 ${guessResult === "right" ? "bg-green-600" : "bg-red-600"}`}>
@@ -244,7 +244,7 @@ export function Game({
                   key={realIndex}
                   onClick={() => handleCardClick(realIndex)}
                   className={`
-                    h-24 text-lg font-semibold border-2 transition-all duration-200
+                    h-24 md:text-lg font-semibold border-2 transition-all duration-200
                     ${getCardStyle(card, isRevealed)} ${!isRevealed && card.type === "red" ? "border-[#F05F45]" : ""} ${!isRevealed && card.type === "blue" ? "border-[#6294D8]" : ""}
                     ${!card.revealed ? "hover:scale-105 cursor-pointer" : "cursor-default"}
                   `}
