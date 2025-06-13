@@ -115,7 +115,14 @@
     @apply border-border outline-ring/50;
   }
   body {
-    @apply bg-background text-foreground;
-     font-family: 'Syne', sans-serif;
+    color: var(--color-foreground);
+    font-family: 'Syne', sans-serif;
   }
+  #root {
+    min-height: 100vh;
+  }
+}
+
+.dark body {
+  background: var(--background);
 }

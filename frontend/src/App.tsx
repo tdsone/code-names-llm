@@ -10,7 +10,7 @@ import Clu3 from './assets/Clu3.svg'
 
 function LoadingSpinner() {
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-b from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800">
+    <div className="flex flex-col items-center justify-center min-h-screen relative bg-gradient-to-b from-[oklch(0.97_0_0)] to-[oklch(0.6_0.118_184.704)]">
       <img src={search} alt="Loading" className="animate-spin h-12 w-12 text-indigo-600" />
       <p className="mt-4 text-lg text-gray-700 dark:text-gray-200">Looking for the exciting set of words...</p>
     </div>
@@ -143,11 +143,11 @@ const human = currentGame
   }
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-b from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 relative">
+    <div className="min-h-screen flex flex-col items-center justify-center relative bg-gradient-to-b from-[#F05F4566] to-[#6294D866]">
       <div className="text-center space-y-8 p-8">
         <div className="space-y-4">
-          <img src={Clu3} alt="Telepathy Two logo" className="mx-auto w-48 h-auto" />
-          <p className="text-xl text-gray-600 dark:text-gray-300 max-w-md">
+          <img src={Clu3} alt="clu3 logo" className="mx-auto w-48 h-auto" />
+          <p className="text-xl text-[#F05F45] dark:text-gray-300 max-w-md">
             Team up with AI in the classic word association game
           </p>
         </div>

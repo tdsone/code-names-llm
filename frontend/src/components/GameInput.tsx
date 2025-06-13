@@ -54,7 +54,7 @@ export default function GameSetup({ onPlayersSubmit, onClose }: { onPlayersSubmi
 
   return (
     <div className="fixed inset-0 z-40 flex items-center justify-center backdrop-blur-sm bg-transparent pointer-events-auto">
-      <div className="relative z-50 bg-[#FFF6F5] p-6 rounded shadow-lg w-full max-w-md pointer-events-auto">
+      <div className="relative z-50 bg-[#FFF6F5] p-6 rounded-lg shadow-lg w-full max-w-md pointer-events-auto">
         <button
           onClick={onClose}
           className="absolute top-3 right-3 text-gray-500 hover:text-gray-700 z-50"
@@ -65,10 +65,10 @@ export default function GameSetup({ onPlayersSubmit, onClose }: { onPlayersSubmi
         </button>
         <h2 className="text-lg font-semibold mb-4 text-center">Game Setup</h2>
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="bg-[#FFEAE7] p-4 rounded">
-            <h3 className="font-medium">Red Player</h3>
+          <div className="bg-[#F05F4599] p-4 rounded text-white">
+            <h3 className="font-medium text-white pb-2">Human Red Player</h3>
             <input
-              className="w-full p-2 border rounded"
+              className="w-full p-2 border rounded text-white"
               placeholder="Name"
               value={red.name}
               onChange={(e) => setRed({ ...red, name: e.target.value })}
@@ -79,15 +79,15 @@ export default function GameSetup({ onPlayersSubmit, onClose }: { onPlayersSubmi
               value={red.role}
               onChange={(e) => setRed({ ...red, role: e.target.value as Player['role'] })}
             >
-              <option value="operative">Operative</option>
-              <option value="spymaster">Spymaster</option>
+              <option value="operative">🔍 Operative</option>
+              <option value="spymaster">🃏 Spymaster</option>
             </select>
           </div>
 
-          <div className="bg-[#E6EEF9] p-4 rounded">
-            <h3 className="font-medium">Blue Player</h3>
+          <div className="bg-[#6294D899] p-4 rounded text-white">
+            <h3 className="font-medium pb-2">Human Blue Player</h3>
             <input
-              className="w-full p-2 border rounded"
+              className="w-full p-2 border rounded text-white"
               placeholder="Name"
               value={blue.name}
               onChange={(e) => setBlue({ ...blue, name: e.target.value })}
@@ -98,8 +98,8 @@ export default function GameSetup({ onPlayersSubmit, onClose }: { onPlayersSubmi
               value={blue.role}
               onChange={(e) => setBlue({ ...blue, role: e.target.value as Player['role'] })}
             >
-              <option value="operative">Operative</option>
-              <option value="spymaster">Spymaster</option>
+              <option value="operative">🔍 Operative</option>
+              <option value="spymaster">🃏 Spymaster</option>
             </select>
           </div>
 
