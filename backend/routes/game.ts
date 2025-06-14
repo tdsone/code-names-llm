@@ -37,8 +37,38 @@ router.post("/", async (req: Request, res: Response) => {
               text: `Generate a JSON array of 25 (NOT MORE THAN 25) unique Codenames cards. Each card should have:
 - a word (string),
 - a type (one of "red", "blue", "neutral", "assassin").
-Make sure there are ${redCount} red, ${blueCount} blue, 7 neutral, 1 assassin. NO team should have MORE THAN 9 CARDS! Only one team can have 9 cards!
-Respond with ONLY raw JSON. Do NOT include markdown or explanations.`,
+Make sure there are ${redCount} red, ${blueCount} blue, 7 neutral, 1 assassin. NO team should have MORE THAN 9 CARDS! Only one team can have 9 cards! All cards should be UNIQUE.
+Respond with ONLY raw JSON. Do NOT include markdown or explanations. Example JSON of a perfect set:
+[
+  {"word": "Apple",     "type": "red"},
+  {"word": "Kangaroo",  "type": "red"},
+  {"word": "Satellite", "type": "red"},
+  {"word": "Volcano",   "type": "red"},
+  {"word": "Guitar",    "type": "red"},
+  {"word": "Diamond",   "type": "red"},
+  {"word": "Engine",    "type": "red"},
+  {"word": "Nurse",     "type": "red"},
+  {"word": "Pyramid",   "type": "red"},
+
+  {"word": "Anchor",    "type": "blue"},
+  {"word": "Glacier",   "type": "blue"},
+  {"word": "Piano",     "type": "blue"},
+  {"word": "Falcon",    "type": "blue"},
+  {"word": "Lantern",   "type": "blue"},
+  {"word": "Orchard",   "type": "blue"},
+  {"word": "Robot",     "type": "blue"},
+  {"word": "Sapphire",  "type": "blue"},
+
+  {"word": "Board",     "type": "neutral"},
+  {"word": "Carpet",    "type": "neutral"},
+  {"word": "Festival",  "type": "neutral"},
+  {"word": "Mirror",    "type": "neutral"},
+  {"word": "Packet",    "type": "neutral"},
+  {"word": "Radar",     "type": "neutral"},
+  {"word": "Yogurt",    "type": "neutral"},
+
+  {"word": "Galaxy",    "type": "assassin"}
+]`,
             },
           ],
         },
