@@ -103,6 +103,12 @@ export function Game({
     return game.currentTeam === "red" ? "Red" : "Blue";
   };
 
+  // Show coloured borders only if the operative is AI
+  const currentOperative = game.teams[game.currentTeam].players.find(
+    (p) => p.role === "operative"
+  );
+  const shouldShowBorderColors = currentOperative?.agent === "ai";
+
   const [revealedCards, setRevealedCards] = useState<boolean[]>(() =>
   game.cards.map((c) => c.revealed ?? false)
 );
@@ -245,7 +251,7 @@ export function Game({
                   onClick={() => handleCardClick(realIndex)}
                   className={`
                     h-24 md:text-lg font-semibold border-2 transition-all duration-200
-                    ${getCardStyle(card, isRevealed)} ${!isRevealed && card.type === "red" ? "border-[#F05F45]" : ""} ${!isRevealed && card.type === "blue" ? "border-[#6294D8]" : ""}
+                    ${getCardStyle(card, isRevealed)} ${!isRevealed && shouldShowBorderColors && card.type === "red" ? "border-[#F05F45]" : ""} ${!isRevealed && shouldShowBorderColors && card.type === "blue" ? "border-[#6294D8]" : ""}
                     ${!card.revealed ? "hover:scale-105 cursor-pointer" : "cursor-default"}
                   `}
                   disabled={card.revealed || game.phase === "finished"}
