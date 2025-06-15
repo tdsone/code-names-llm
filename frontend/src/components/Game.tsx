@@ -367,7 +367,7 @@ export function Game({
           </div>
 
           {/* Center: Turn Info and Clue (only for small screens) */}
-          <div className="flex justify-center items-center gap-6 lg:hidden w-full text-lg font-semibold text-gray-700 dark:text-gray-300 mb-4">
+          <div className="flex justify-center items-center gap-6 lg:hidden w-full text-lg font-semibold text-gray-700 dark:text-gray-300 text-sm">
             <span>
               {getCurrentTeamDisplay()} {getPhaseDisplay()}
               {showSpinner && <LoadingSpinner />}
