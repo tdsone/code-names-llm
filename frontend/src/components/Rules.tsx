@@ -1,0 +1,88 @@
+ 
+export function Rules() {
+  return (
+    <div className="space-y-6 text-gray-800 dark:text-gray-200 p-4 overflow-y-auto max-h-[80vh]">
+      <h1 className="text-3xl font-bold">Game Rules</h1>
+
+      <section>
+        <h2 className="text-2xl font-semibold mb-2">Overview</h2>
+        <ul className="list-disc pl-5 space-y-1">
+          <li>
+            Two teams compete in a one-word clue game to guess hidden cards on the board.
+          </li>
+          <li>
+            Each round, a spymaster gives a one-word clue and a number.
+          </li>
+          <li>
+            Teams try to guess their own cards while avoiding the assassin card.
+          </li>
+        </ul>
+      </section>
+
+      <section>
+        <h2 className="text-2xl font-semibold mb-2">Teams and Roles</h2>
+        <ul className="list-disc pl-5 space-y-1">
+          <li>
+            <span className="font-semibold">Red Team</span> (<span className="text-[#F05F45]">Red</span>): Human + AI partner
+          </li>
+          <li>
+            <span className="font-semibold">Blue Team</span> (<span className="text-[#6294D8]">Blue</span>): Human + AI partner
+          </li>
+          <li>
+            The AI partner alternates between two roles:
+            <ul className="list-disc pl-5 space-y-1 mt-1">
+              <li>
+                <span className="font-semibold">Spymaster</span>: Gives a one-word clue and a number.
+              </li>
+              <li>
+                <span className="font-semibold">Operative</span>: Makes guesses based on the clue.
+              </li>
+            </ul>
+          </li>
+        </ul>
+      </section>
+
+      <section>
+        <h2 className="text-2xl font-semibold mb-2">Gameplay</h2>
+        <ul className="list-disc pl-5 space-y-1">
+          <li>
+            On your team's turn, the spymaster gives a one-word clue and a number indicating how many cards relate to the clue.
+          </li>
+          <li>
+            The operative makes one guess at a time by selecting a card.
+          </li>
+          <li>
+            After each guess, the card is revealed:
+            <ul className="list-disc pl-5 space-y-1 mt-1">
+              <li>Your team's color: continue guessing.</li>
+              <li>Neutral: turn ends.</li>
+              <li>Opponent's color: turn ends, point goes to opponent.</li>
+              <li>Assassin: game ends immediately; your team loses.</li>
+            </ul>
+          </li>
+          <li>
+            The operative may choose to pass and end the turn at any time.
+          </li>
+        </ul>
+      </section>
+
+      <section>
+        <h2 className="text-2xl font-semibold mb-2">Objective &amp; Winning</h2>
+        <ul className="list-disc pl-5 space-y-1">
+          <li>
+            Reveal all cards of your team's color before the other team.
+          </li>
+          <li>
+            Avoid revealing the assassin card at all costs.
+          </li>
+          <li>
+            The first team to clear all their cards wins.
+          </li>
+          <li>
+            If a team reveals the assassin card, they lose immediately.
+          </li>
+        </ul>
+      </section>
+    </div>
+  );
+}

@@ -2,6 +2,9 @@ import { useMemo, useState, useEffect } from "react";
 import type { Card, Game as GameType } from "../../../shared/types";
 import { Button } from "./ui/button";
 import { ClueForm } from "./ClueForm";
+import { Rules } from "./Rules";
+import { About } from "./About"
+
 
 import search from '../assets/search.svg'
 
@@ -40,6 +43,10 @@ export function Game({
   const [previousCards, setPreviousCards] = useState<Card[]>(game.cards);
   // Track the previous team that made a move
   const [previousTeam, setPreviousTeam] = useState<GameType["currentTeam"]>(game.currentTeam);
+
+  const [showRulesModal, setShowRulesModal] = useState(false);
+  // Controls visibility of the About modal
+  const [showAboutModal, setShowAboutModal] = useState(false);
 
   // Track which revealed card index we have already processed this turn
   const [lastRevealedIndex, setLastRevealedIndex] = useState<number | null>(null);
@@ -210,6 +217,46 @@ export function Game({
 
   return (
     <div className="min-h-screen w-full bg-gradient-to-b from-[#F05F4533] to-[#6294D833] dark:from-gray-900 dark:to-gray-800 p-4">
+      {showRulesModal && (
+        <div
+          className="fixed inset-0 bg-transparent flex items-start justify-center z-50 overflow-y-auto"
+          onClick={() => setShowRulesModal(false)}
+        >
+          <div
+            className="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-3xl w-full relative my-8 max-h-[90vh] overflow-y-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              onClick={() => setShowRulesModal(false)}
+              className="absolute top-4 right-4 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
+              aria-label="Close rules modal"
+            >
+              ×
+            </button>
+            <Rules />
+          </div>
+        </div>
+      )}
+      {showAboutModal && (
+        <div
+          className="fixed inset-0 bg-transparent flex items-start justify-center z-50 overflow-y-auto"
+          onClick={() => setShowAboutModal(false)}
+        >
+          <div
+            className="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-3xl w-full relative my-8 max-h-[90vh] overflow-y-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              onClick={() => setShowAboutModal(false)}
+              className="absolute top-4 right-4 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
+              aria-label="Close about modal"
+            >
+              ×
+            </button>
+            <About />
+          </div>
+        </div>
+      )}
       <div className="max-w-6xl mx-auto">
         {guessResult && (
           <div className={`absolute top-10 left-1/2 transform -translate-x-1/2 px-6 py-2 rounded text-white text-xl font-bold shadow-md z-50 transition-opacity duration-500 ${guessResult === "right"
@@ -230,14 +277,24 @@ export function Game({
           </div>
         )}
         {/* Game Header */}
-        <header className="w-full flex justify-between items-center py-4 px-6 bg-white dark:bg-gray-900 shadow-md mb-6">
+        <header className="w-full flex justify-between items-center py-4 px-6 bg-white dark:bg-gray-900 shadow-md mb-6 rounded-lg">
           <div className="flex items-center space-x-4">
             <img src="/src/assets/Clu3.svg" alt="Clu3 Logo" className="h-10 w-auto" />
           </div>
           <div className="flex space-x-4">
-            <Button variant="ghost">Rules</Button>
-            <Button variant="ghost">About</Button>
-            <Button>Start New Game</Button>
+            <Button className="mx-2" variant="ghost" onClick={() => setShowRulesModal(true)}>
+              Rules
+            </Button>
+            <Button
+              className="mx-2"
+              variant="ghost"
+              onClick={() => setShowAboutModal(true)}
+            >
+              About
+            </Button>
+            <Button className="px-4 py-1 bg-[#6294D8] hover:bg-[#4f7bc2] text-white rounded transition-colors focus:outline-none focus:ring-2 focus:ring-[#6294D8] focus:ring-offset-2 font-semibold">
+              Start New Game
+            </Button>
           </div>
         </header>
 

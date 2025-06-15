@@ -1,3 +1,4 @@
+import React from "react";
 import { useState } from "react";
 
 export function ClueForm({ onSubmit }: { onSubmit: (clue: { word: string, number: number }) => void }) {
@@ -18,7 +19,7 @@ export function ClueForm({ onSubmit }: { onSubmit: (clue: { word: string, number
         value={word}
         onChange={e => setWord(e.target.value)}
         placeholder="Clue word"
-        className="border px-3 py-1 rounded"
+        className="border border-gray-300 dark:border-gray-600 px-3 py-1 rounded focus:outline-none focus:ring-2 focus:ring-[#6294D8] focus:border-[#6294D8] transition-colors"
       />
       <input
         value={number}
@@ -26,9 +27,14 @@ export function ClueForm({ onSubmit }: { onSubmit: (clue: { word: string, number
         placeholder="# guesses"
         type="number"
         min="1"
-        className="border px-2 py-1 w-20 rounded"
+        className="border border-gray-300 dark:border-gray-600 px-2 py-1 w-20 rounded focus:outline-none focus:ring-2 focus:ring-[#6294D8] focus:border-[#6294D8] transition-colors"
       />
-      <button type="submit" className="px-4 py-1 bg-blue-500 text-white rounded">Submit</button>
+      <button
+        type="submit"
+        className="px-4 py-1 bg-[#6294D8] hover:bg-[#4f7bc2] text-white rounded transition-colors focus:outline-none focus:ring-2 focus:ring-[#6294D8] focus:ring-offset-2 font-semibold"
+      >
+        Submit
+      </button>
     </form>
   );
 }

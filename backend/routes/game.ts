@@ -68,7 +68,7 @@ Respond with ONLY raw JSON. Do NOT include markdown or explanations. Example JSO
   {"word": "Yogurt",    "type": "neutral"},
 
   {"word": "Galaxy",    "type": "assassin"}
-]`,
+]. If you output more or fewer than exactly 25 cards, respond with an error message instead of cards.`,
             },
           ],
         },
@@ -94,10 +94,36 @@ Respond with ONLY raw JSON. Do NOT include markdown or explanations. Example JSO
     // Parse it
     const parsedCards = JSON.parse(jsonText) as Omit<CardType, "revealed">[];
 
-    const cards: CardType[] = parsedCards.map((c) => ({
+    // Convert to CardType and mark unrevealed
+    const rawCards: CardType[] = parsedCards.map((c) => ({
       ...c,
       revealed: false,
-    }));    
+    }));
+
+    // --- post‑process to enforce card limits --------------------
+    let redSeen = 0;
+    let blueSeen = 0;
+    const sanitizedCards: CardType[] = [];
+
+    for (const card of rawCards) {
+      if (card.type === "red") {
+        if (redSeen < redCount) {
+          sanitizedCards.push(card);
+          redSeen++;
+        }
+      } else if (card.type === "blue") {
+        if (blueSeen < blueCount) {
+          sanitizedCards.push(card);
+          blueSeen++;
+        }
+      } else {
+        // neutrals and assassin are always kept
+        sanitizedCards.push(card);
+      }
+    }
+
+    // Use the sanitized list for the game
+    const cards = sanitizedCards;
 
     const { teams } = req.body || {};
     let redTeam: TeamType;

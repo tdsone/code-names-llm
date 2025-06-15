@@ -7,6 +7,7 @@ import { useState, useEffect } from "react";
 import { isAISpymasterTurn } from "../utils/isAISpymaster";
 import search from './assets/search.svg';
 import Clu3 from './assets/Clu3.svg'
+import { Rules } from "./components/Rules";
 
 function LoadingSpinner() {
   return (
@@ -18,6 +19,11 @@ function LoadingSpinner() {
 }
 
 function App() {
+  // Simple routing: render Rules page if URL is /rules
+  if (window.location.pathname === "/rules") {
+    return <Rules />;
+  }
+
   const [currentGame, setCurrentGame] = useState<GameType | null>(null);
   const [loading, setLoading] = useState(false);
   const [showGameInput, setShowGameInput] = useState(false);
