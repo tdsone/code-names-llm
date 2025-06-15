@@ -3,6 +3,19 @@ import type { Card, Game as GameType } from "../../../shared/types";
 import { Button } from "./ui/button";
 import { ClueForm } from "./ClueForm";
 
+import search from '../assets/search.svg'
+
+export function LoadingSpinner() {
+  return (
+    <img
+      src={search}
+      alt="Loading"
+      className="animate-spin h-5 w-5 inline-block ml-2"
+    />
+  );
+}
+
+
 interface GameProps {
   game: GameType;
   onCardClick: (cardIndex: number) => void;
@@ -134,6 +147,13 @@ export function Game({
   );
   const shouldShowBorderColors = currentOperative?.agent === "ai";
 
+  // Determine if we should show the loading spinner while AI is generating a clue
+  const currentPlayers = game.teams[game.currentTeam].players;
+  const spymaster = currentPlayers.find((p) => p.role === "spymaster");
+  const showSpinner =
+    (game.phase === "giving-clue" && spymaster?.agent === "ai") ||
+    (game.phase === "waiting" && !game.clue && spymaster?.agent === "ai");
+
   const [revealedCards, setRevealedCards] = useState<boolean[]>(() =>
   game.cards.map((c) => c.revealed ?? false)
 );
@@ -161,6 +181,7 @@ export function Game({
         return "";
     }
   };
+
 
   const handleCardClick = (cardIndex: number) => {
     const card = game.cards[cardIndex];
@@ -222,7 +243,10 @@ export function Game({
 
         {/* Large screen Turn Info above board */}
         <div className="hidden lg:flex justify-center items-center gap-6 w-full text-lg font-semibold text-gray-700 dark:text-gray-300 mb-4">
-          <span>{getCurrentTeamDisplay()} {getPhaseDisplay()}</span>
+          <span>
+            {getCurrentTeamDisplay()} {getPhaseDisplay()}
+            {showSpinner && <LoadingSpinner />}
+          </span>
           {game.clue && game.phase === "guessing" && (
             <div className={`flex items-center gap-3 px-4 py-2 rounded-lg shadow-sm border
               ${game.currentTeam === "red"
@@ -277,7 +301,10 @@ export function Game({
 
           {/* Center: Turn Info and Clue (only for small screens) */}
           <div className="flex justify-center items-center gap-6 lg:hidden w-full text-lg font-semibold text-gray-700 dark:text-gray-300 mb-4">
-            <span>{getCurrentTeamDisplay()} {getPhaseDisplay()}</span>
+            <span>
+              {getCurrentTeamDisplay()} {getPhaseDisplay()}
+              {showSpinner && <LoadingSpinner />}
+            </span>
             {game.clue && game.phase === "guessing" && (
               <div className={`flex items-center gap-3 px-4 py-2 rounded-lg shadow-sm border
                 ${game.currentTeam === "red"
