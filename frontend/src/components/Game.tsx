@@ -215,6 +215,11 @@ export function Game({
     onCardClick(cardIndex);
   };
 
+  // Resets the app to its initial landing screen
+  const handleStartNewGame = () => {
+    window.location.reload(); // simplest reset for now
+  };
+
   return (
     <div className="min-h-screen w-full bg-gradient-to-b from-[#F05F4533] to-[#6294D833] dark:from-gray-900 dark:to-gray-800 p-4">
       {showRulesModal && (
@@ -292,7 +297,10 @@ export function Game({
             >
               About
             </Button>
-            <Button className="px-4 py-1 bg-[#6294D8] hover:bg-[#4f7bc2] text-white rounded transition-colors focus:outline-none focus:ring-2 focus:ring-[#6294D8] focus:ring-offset-2 font-semibold">
+            <Button
+              className="px-4 py-1 bg-[#6294D8] hover:bg-[#4f7bc2] text-white rounded transition-colors focus:outline-none focus:ring-2 focus:ring-[#6294D8] focus:ring-offset-2 font-semibold"
+              onClick={handleStartNewGame}
+            >
               Start New Game
             </Button>
           </div>
