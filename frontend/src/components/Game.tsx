@@ -22,20 +22,22 @@ export function Game({
   showHumanInfo,
   onSubmitClue,
 }: GameProps) {
-  const [guessResult, setGuessResult] = useState<"right" | "wrong" | null>(null);
+  const [guessResult, setGuessResult] = useState<"right" | "wrong" | "assassin" | null>(null);
   const [turnPassed, setTurnPassed] = useState(false);
   const [previousCards, setPreviousCards] = useState<Card[]>(game.cards);
   // Track the previous team that made a move
   const [previousTeam, setPreviousTeam] = useState<GameType["currentTeam"]>(game.currentTeam);
 
+  // Track which revealed card index we have already processed this turn
+  const [lastRevealedIndex, setLastRevealedIndex] = useState<number | null>(null);
 
+  // When a wrong guess happens, show the banner for 1 s, then
+  // 1) hide it and 2) show the "turn passed" banner.
   useEffect(() => {
-    if (guessResult) {
+    if (guessResult === "wrong") {
       const timer = setTimeout(() => {
-        if (guessResult === "wrong") {
-          setTurnPassed(true);
-        }
-        setGuessResult(null);
+        setGuessResult(null);      // hide "Wrong Guess!" banner
+        setTurnPassed(true);       // now show "Turn passed" banner
       }, 1000);
       return () => clearTimeout(timer);
     }
@@ -43,32 +45,55 @@ export function Game({
 
   useEffect(() => {
     if (turnPassed) {
-      const timer = setTimeout(() => setTurnPassed(false), 1500);
+      const timer = setTimeout(() => {
+        setTurnPassed(false);
+        setGuessResult(null);
+      }, 1500);
       return () => clearTimeout(timer);
     }
   }, [turnPassed]);
 
   useEffect(() => {
+    // Only run banner logic while the operative is guessing
+    if (game.phase !== "guessing") {
+      // Keep previousCards in sync so that the next turn starts clean
+      setPreviousCards(game.cards);
+      return;
+    }
+    if (guessResult || turnPassed) {
+    setPreviousCards(game.cards);
+    return;
+  }
+
+
     const newRevealedIndex = game.cards.findIndex(
       (card, i) => card.revealed && !previousCards[i]?.revealed
     );
 
-    if (newRevealedIndex !== -1) {
+    // Prevent double‑handling the same card (e.g. when another update for the same turn arrives)
+    if (newRevealedIndex !== -1 && newRevealedIndex !== lastRevealedIndex) {
+      setLastRevealedIndex(newRevealedIndex);
       const newCard = game.cards[newRevealedIndex];
-      const isCorrect = newCard.type === previousTeam;
-      setGuessResult(isCorrect ? "right" : "wrong");
-
-      if (!isCorrect) {
-        setTimeout(() => setTurnPassed(true), 1000);
+      const isAssassin = newCard.type === "assassin";
+      if (isAssassin) {
+        setGuessResult("assassin");
+      } else {
+        const isCorrect = newCard.type === previousTeam;
+        setGuessResult(isCorrect ? "right" : "wrong");
       }
     }
 
     setPreviousCards(game.cards);
-  }, [game.cards, previousTeam]);
+  }, [game.cards, game.phase, previousTeam, lastRevealedIndex, previousCards, guessResult, turnPassed]);
 
   // Update previousTeam to the team before the current one
   useEffect(() => {
     setPreviousTeam(game.currentTeam);
+  }, [game.currentTeam]);
+
+  // Clear the reveal tracker when the turn switches to the other team
+  useEffect(() => {
+    setLastRevealedIndex(null);
   }, [game.currentTeam]);
 
   const shuffledIndices = useMemo(() => {
@@ -140,8 +165,16 @@ export function Game({
   const handleCardClick = (cardIndex: number) => {
     const card = game.cards[cardIndex];
     if (!revealedCards[cardIndex] && game.phase === "guessing") {
-      const isCorrect = card.type === game.currentTeam;
-      setGuessResult(isCorrect ? "right" : "wrong");
+      if (card.type === "assassin") {
+        setGuessResult("assassin");
+        // Remember that we've already handled this reveal locally
+        setLastRevealedIndex(cardIndex);
+      } else {
+        const isCorrect = card.type === game.currentTeam;
+        setGuessResult(isCorrect ? "right" : "wrong");
+        // Remember that we've already handled this reveal locally
+        setLastRevealedIndex(cardIndex);
+      }
 
       // Optimistically reveal the card
       setRevealedCards((prev) => {
@@ -158,8 +191,16 @@ export function Game({
     <div className="min-h-screen w-full bg-gradient-to-b from-[#F05F4533] to-[#6294D833] dark:from-gray-900 dark:to-gray-800 p-4">
       <div className="max-w-6xl mx-auto">
         {guessResult && (
-          <div className={`absolute top-10 left-1/2 transform -translate-x-1/2 px-6 py-2 rounded text-white text-xl font-bold shadow-md z-50 transition-opacity duration-500 ${guessResult === "right" ? "bg-green-600" : "bg-red-600"}`}>
-            {guessResult === "right" ? "Right Guess!" : "Wrong Guess!"}
+          <div className={`absolute top-10 left-1/2 transform -translate-x-1/2 px-6 py-2 rounded text-white text-xl font-bold shadow-md z-50 transition-opacity duration-500 ${guessResult === "right"
+            ? "bg-green-600"
+            : guessResult === "assassin"
+              ? "bg-black"
+              : "bg-red-600"}`}>
+            {guessResult === "right"
+              ? "Right Guess!"
+              : guessResult === "assassin"
+                ? "Assassin Card – Game Over"
+                : "Wrong Guess!"}
           </div>
         )}
         {turnPassed && (
@@ -183,11 +224,20 @@ export function Game({
         <div className="hidden lg:flex justify-center items-center gap-6 w-full text-lg font-semibold text-gray-700 dark:text-gray-300 mb-4">
           <span>{getCurrentTeamDisplay()} {getPhaseDisplay()}</span>
           {game.clue && game.phase === "guessing" && (
-            <div className="flex items-center gap-3 px-4 py-2 bg-indigo-100 dark:bg-indigo-900/40 border border-indigo-300 dark:border-indigo-700 rounded-lg shadow-sm">
-              <span className="text-xl font-semibold text-indigo-800 dark:text-indigo-200">
+            <div className={`flex items-center gap-3 px-4 py-2 rounded-lg shadow-sm border
+              ${game.currentTeam === "red"
+                ? "bg-[#F05F45]/10 dark:bg-[#F05F45]/30 border-[#F05F45]"
+                : "bg-[#6294D8]/10 dark:bg-[#6294D8]/30 border-[#6294D8]"}`}>
+              <span className={`text-xl font-semibold ${
+                game.currentTeam === "red"
+                  ? "text-[#F05F45] dark:text-[#F05F45]"
+                  : "text-[#6294D8] dark:text-[#6294D8]"
+              }`}>
                 {game.clue.word}
               </span>
-              <span className="inline-block px-2 py-0.5 rounded-full bg-indigo-300 text-white font-semibold text-lg">
+              <span className={`inline-block px-2 py-0.5 rounded-full text-white font-semibold text-lg ${
+                game.currentTeam === "red" ? "bg-[#F05F45]" : "bg-[#6294D8]"
+              }`}>
                 {game.clue.number}
               </span>
             </div>
@@ -229,11 +279,20 @@ export function Game({
           <div className="flex justify-center items-center gap-6 lg:hidden w-full text-lg font-semibold text-gray-700 dark:text-gray-300 mb-4">
             <span>{getCurrentTeamDisplay()} {getPhaseDisplay()}</span>
             {game.clue && game.phase === "guessing" && (
-              <div className="flex items-center gap-3 px-4 py-2 bg-indigo-100 dark:bg-indigo-900/40 border border-indigo-300 dark:border-indigo-700 rounded-lg shadow-sm">
-                <span className="text-xl font-semibold text-indigo-800 dark:text-indigo-200">
+              <div className={`flex items-center gap-3 px-4 py-2 rounded-lg shadow-sm border
+                ${game.currentTeam === "red"
+                  ? "bg-[#F05F45]/10 dark:bg-[#F05F45]/30 border-[#F05F45]"
+                  : "bg-[#6294D8]/10 dark:bg-[#6294D8]/30 border-[#6294D8]"}`}>
+                <span className={`text-xl font-semibold ${
+                  game.currentTeam === "red"
+                    ? "text-[#F05F45] dark:text-[#F05F45]"
+                    : "text-[#6294D8] dark:text-[#6294D8]"
+                }`}>
                   {game.clue.word}
                 </span>
-                <span className="inline-block px-2 py-0.5 rounded-full bg-indigo-300 text-white font-semibold text-lg">
+                <span className={`inline-block px-2 py-0.5 rounded-full text-white font-semibold text-lg ${
+                  game.currentTeam === "red" ? "bg-[#F05F45]" : "bg-[#6294D8]"
+                }`}>
                   {game.clue.number}
                 </span>
               </div>
