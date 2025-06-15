@@ -40,10 +40,20 @@ export function Game({
   onSubmitClue,
 }: GameProps) {
   const [guessResult, setGuessResult] = useState<"right" | "wrong" | "assassin" | null>(null);
+  // Temporarily hides the clue after a wrong guess
+  const [hideClue, setHideClue] = useState(false);
   const [turnPassed, setTurnPassed] = useState(false);
   const [previousCards, setPreviousCards] = useState<Card[]>(game.cards);
   // Track the previous team that made a move
   const [previousTeam, setPreviousTeam] = useState<GameType["currentTeam"]>(game.currentTeam);
+  // True while we're waiting for the AI spymaster to deliver a clue
+  const [awaitingClue, setAwaitingClue] = useState<boolean>(
+    !game.clue || !game.clue.word?.trim()
+  );
+
+  // Force spinner to show after wrong guess if next spymaster is AI
+  const [forceSpinner, setForceSpinner] = useState(false);
+
 
   const [showRulesModal, setShowRulesModal] = useState(false);
   // Controls visibility of the About modal
@@ -56,9 +66,16 @@ export function Game({
   // 1) hide it and 2) show the "turn passed" banner.
   useEffect(() => {
     if (guessResult === "wrong") {
+      setHideClue(true); // hide clue while waiting for new one
       const timer = setTimeout(() => {
         setGuessResult(null);      // hide "Wrong Guess!" banner
         setTurnPassed(true);       // now show "Turn passed" banner
+        // If next spymaster is AI, force the spinner to show
+        const nextTeam = previousTeam === "red" ? "blue" : "red";
+        const nextSpymaster = game.teams[nextTeam].players.find((p) => p.role === "spymaster");
+        if (nextSpymaster?.agent === "ai") {
+          setForceSpinner(true);
+        }
       }, 1000);
       return () => clearTimeout(timer);
     }
@@ -107,10 +124,25 @@ export function Game({
     setPreviousCards(game.cards);
   }, [game.cards, game.phase, previousTeam, lastRevealedIndex, previousCards, guessResult, turnPassed]);
 
-  // Update previousTeam to the team before the current one
+  // Track the previous team when the turn switches
   useEffect(() => {
     setPreviousTeam(game.currentTeam);
   }, [game.currentTeam]);
+
+  // Toggle awaitingClue whenever the clue becomes empty vs. non‑empty
+  useEffect(() => {
+    if (game.phase === "finished") {
+      setAwaitingClue(false);
+      return;
+    }
+
+    const hasRealClue = !!game.clue && !!game.clue.word?.trim();
+    setAwaitingClue(!hasRealClue);
+    if (hasRealClue) {
+      setForceSpinner(false);
+      setHideClue(false); // show clue again once fresh clue arrives
+    }
+  }, [game.clue?.word, game.clue?.number, game.phase]);
 
   // Clear the reveal tracker when the turn switches to the other team
   useEffect(() => {
@@ -155,12 +187,7 @@ export function Game({
   );
   const shouldShowBorderColors = currentOperative?.agent === "ai";
 
-  // Determine if we should show the loading spinner while AI is generating a clue
-  const currentPlayers = game.teams[game.currentTeam].players;
-  const spymaster = currentPlayers.find((p) => p.role === "spymaster");
-  const showSpinner =
-    (game.phase === "giving-clue" && spymaster?.agent === "ai") ||
-    (game.phase === "waiting" && !game.clue && spymaster?.agent === "ai");
+
 
   const [revealedCards, setRevealedCards] = useState<boolean[]>(() =>
   game.cards.map((c) => c.revealed ?? false)
@@ -189,6 +216,25 @@ export function Game({
         return "";
     }
   };
+
+  // Determine if the spymaster is currently thinking, based on the phase message
+  const phaseMessage = getPhaseDisplay();
+  const currentPlayers = game.teams[game.currentTeam].players;
+  const spymaster = currentPlayers.find((p) => p.role === "spymaster");
+  // Show spinner while AI spymaster hasn't delivered a real clue yet
+  const showSpinner =
+    spymaster?.agent?.trim().toLowerCase() === "ai" &&
+    (forceSpinner || awaitingClue);
+
+  // --- DEBUG: spinner state --------------------------------------
+console.log("[Spinner-Debug]", {
+  phase: game.phase,
+  clueWord: game.clue?.word ?? "(none)",
+  awaitingClue,
+  forceSpinner,
+  spymasterAgent: spymaster?.agent,
+  showSpinner
+});
 
 
   const handleCardClick = (cardIndex: number) => {
@@ -311,10 +357,10 @@ export function Game({
         {/* Large screen Turn Info above board */}
         <div className="hidden lg:flex justify-center items-center gap-6 w-full text-lg font-semibold text-gray-700 dark:text-gray-300 mb-4">
           <span>
-            {getCurrentTeamDisplay()} {getPhaseDisplay()}
+            {getCurrentTeamDisplay()} {phaseMessage}
             {showSpinner && <LoadingSpinner />}
           </span>
-          {game.clue && game.phase === "guessing" && (
+          {!hideClue && game.clue && game.phase === "guessing" && (
             <div className={`flex items-center gap-3 px-4 py-2 rounded-lg shadow-sm border
               ${game.currentTeam === "red"
                 ? "bg-[#F05F45]/10 dark:bg-[#F05F45]/30 border-[#F05F45]"
@@ -369,10 +415,10 @@ export function Game({
           {/* Center: Turn Info and Clue (only for small screens) */}
           <div className="flex justify-center items-center gap-6 lg:hidden w-full text-lg font-semibold text-gray-700 dark:text-gray-300 text-sm">
             <span>
-              {getCurrentTeamDisplay()} {getPhaseDisplay()}
+              {getCurrentTeamDisplay()} {phaseMessage}
               {showSpinner && <LoadingSpinner />}
             </span>
-            {game.clue && game.phase === "guessing" && (
+            {!hideClue && game.clue && game.phase === "guessing" && (
               <div className={`flex items-center gap-3 px-4 py-2 rounded-lg shadow-sm border
                 ${game.currentTeam === "red"
                   ? "bg-[#F05F45]/10 dark:bg-[#F05F45]/30 border-[#F05F45]"
