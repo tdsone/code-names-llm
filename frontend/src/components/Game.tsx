@@ -7,6 +7,7 @@ import { About } from "./About"
 
 
 import search from '../assets/search.svg'
+import Clu3Logo from '../assets/Clu3.svg';
 
 export function LoadingSpinner() {
   return (
@@ -282,11 +283,11 @@ export function Game({
           </div>
         )}
         {/* Game Header */}
-        <header className="w-full flex justify-between items-center py-4 px-6 bg-white dark:bg-gray-900 shadow-md mb-6 rounded-lg">
+        <header className="w-full flex flex-nowrap items-center py-4 px-4 sm:px-6 bg-white dark:bg-gray-900 shadow-md mb-6 rounded-lg">
           <div className="flex items-center space-x-4">
-            <img src="/src/assets/Clu3.svg" alt="Clu3 Logo" className="h-10 w-auto" />
+            <img src={Clu3Logo} alt="Clu3 Logo" className="lg:h-10 w-auto h-4 flex-shrink-0 mr-4" />
           </div>
-          <div className="flex space-x-4">
+          <div className="flex gap-2 sm:gap-4 ml-auto">
             <Button className="mx-2" variant="ghost" onClick={() => setShowRulesModal(true)}>
               Rules
             </Button>
@@ -298,10 +299,11 @@ export function Game({
               About
             </Button>
             <Button
-              className="px-4 py-1 bg-[#6294D8] hover:bg-[#4f7bc2] text-white rounded transition-colors focus:outline-none focus:ring-2 focus:ring-[#6294D8] focus:ring-offset-2 font-semibold"
+              className="px-3 sm:px-4 py-1 bg-[#6294D8] hover:bg-[#4f7bc2] text-white rounded transition-colors focus:outline-none focus:ring-2 focus:ring-[#6294D8] focus:ring-offset-2 font-semibold text-sm sm:text-base"
               onClick={handleStartNewGame}
             >
-              Start New Game
+              <span className="sm:hidden">New&nbsp;Game</span>
+              <span className="hidden sm:inline">Start&nbsp;New&nbsp;Game</span>
             </Button>
           </div>
         </header>
