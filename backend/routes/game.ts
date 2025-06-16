@@ -6,6 +6,7 @@ import type {
   Clue as ClueType,
   Player as PlayerType,
   Team as TeamType,
+  ClueHistoryItem,
 } from "../../shared/types";
 
 import { v4 as uuidv4 } from "uuid";
@@ -186,6 +187,7 @@ Respond with ONLY raw JSON. Do NOT include markdown or explanations. Example JSO
       currentTeam: startingTeam,
       phase: "waiting",
       createdAt: new Date(),
+      aiClueWords: [],
     };
     games[game.id] = game;
 
@@ -256,6 +258,16 @@ router.post("/:id/clue", async (req, res) => {
   const game = games[id];
 
   game.clue = { word, number };
+  // Append this clue word to the AI clue history
+  if (!game.aiClueWords) {
+    game.aiClueWords = [];
+  }
+  const historyItem = {
+    clue: game.clue.word,
+    words: game.clue.words ?? [],
+  };
+  game.aiClueWords.push(historyItem);
+
   game.guessesRemaining = number + 1;
   game.phase = "guessing";
 
@@ -280,6 +292,14 @@ async function endTurn(game: GameType): Promise<void> {
   game.guessesRemaining = undefined;
 
   await maybeGenerateClue(game);
+  // Persist the AI‑generated clue *targets* (the words the clue points to)
+  const currentClue   = (game.clue as ClueType | undefined);
+  if (currentClue) {
+    (game.aiClueWords ??= []).push({
+      clue: currentClue.word,
+      words: currentClue.words ?? [],
+    });
+  }
 }
 
 /**
@@ -365,6 +385,14 @@ router.post("/:id/ai-clue", async (req, res) => {
   if (!game) return res.status(404).json({ success:false, message:"Game not found" });
 
   await maybeGenerateClue(game);
+  // Persist the AI‑generated clue *targets* (the words the clue is pointing to)
+  const currentClue = (game.clue as ClueType | undefined);
+  if (currentClue) {
+    (game.aiClueWords ??= []).push({
+      clue: currentClue.word,
+      words: currentClue.words ?? [],
+    });
+  }
   res.json({ success: true, game });
 });
 

@@ -6,6 +6,13 @@ export interface Card {
 export interface Clue {
   word: string;
   number: number;
+  words?: string[]
+}
+
+/** A history entry pairing a clue with the board words it targets */
+export interface ClueHistoryItem {
+  clue: string;
+  words: string[];
 }
 
 export interface Game {
@@ -15,6 +22,7 @@ export interface Game {
   currentTeam: "red" | "blue";
   phase: "waiting" | "giving-clue" | "guessing" | "finished";
   clue?: Clue;
+  aiClueWords: ClueHistoryItem[];
   guessesRemaining?: number;
   winner?: "red" | "blue";
   createdAt: Date;
