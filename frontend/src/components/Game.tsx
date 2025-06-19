@@ -1,4 +1,4 @@
-import { useMemo, useState, useEffect } from "react";
+import { useMemo, useState, useEffect, Fragment } from "react";
 import type { Card, Game as GameType } from "../../../shared/types";
 import { Button } from "./ui/button";
 import { ClueForm } from "./ClueForm";
@@ -8,6 +8,9 @@ import { About } from "./About"
 
 import search from '../assets/search.svg'
 import Clu3Logo from '../assets/Clu3.svg';
+
+import { Dialog, Transition } from "@headlessui/react";
+import RevealClues from "./RevealClues";
 
 export function LoadingSpinner() {
   return (
@@ -193,6 +196,12 @@ export function Game({
   game.cards.map((c) => c.revealed ?? false)
 );
 
+  // ----- Modal for revealing AI clues -----
+  const [isClueModalOpen, setIsClueModalOpen] = useState(false);
+  const isGameOver = game.phase === "finished";           // adjust if your logic differs
+  // Adjust this if your backend exposes a different property
+  const aiClueWords: string[] = (game as any).aiClueWords ?? [];
+
   const getPhaseDisplay = () => {
     const currentPlayers = game.teams[game.currentTeam].players;
     const spymaster = currentPlayers.find((p) => p.role === "spymaster");
@@ -238,8 +247,11 @@ console.log("[Spinner-Debug]", {
 
 
   const handleCardClick = (cardIndex: number) => {
+    // Ignore clicks unless the game is in the guessing phase
+    if (game.phase !== "guessing") return;
+
     const card = game.cards[cardIndex];
-    if (!revealedCards[cardIndex] && game.phase === "guessing") {
+    if (!revealedCards[cardIndex]) {
       if (card.type === "assassin") {
         setGuessResult("assassin");
         // Remember that we've already handled this reveal locally
@@ -260,7 +272,7 @@ console.log("[Spinner-Debug]", {
     }
 
     onCardClick(cardIndex);
-  };
+  }
 
   // Resets the app to its initial landing screen
   const handleStartNewGame = () => {
@@ -453,7 +465,7 @@ console.log("[Spinner-Debug]", {
                     ${getCardStyle(card, isRevealed)} ${!isRevealed && shouldShowBorderColors && card.type === "red" ? "border-[#F05F45]" : ""} ${!isRevealed && shouldShowBorderColors && card.type === "blue" ? "border-[#6294D8]" : ""}
                     ${!card.revealed ? "hover:scale-105 cursor-pointer" : "cursor-default"}
                   `}
-                  disabled={card.revealed || game.phase === "finished"}
+                  disabled={card.revealed || game.phase !== "guessing"}
                   variant="ghost"
                 >
                   {card.word}
@@ -506,6 +518,73 @@ console.log("[Spinner-Debug]", {
             </div>
           </div>
         </div>
+
+        {/* Reveal AI clues button + modal (visible only after game ends) */}
+        {isGameOver && (
+          <>
+            <div className="flex justify-center mt-6">
+              <button
+                type="button"
+                onClick={() => setIsClueModalOpen(true)}
+                className="rounded bg-indigo-600 px-4 py-2 text-white hover:bg-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-400"
+              >
+                Reveal AI clues
+              </button>
+            </div>
+
+            <Transition appear show={isClueModalOpen} as={Fragment}>
+              <Dialog
+                as="div"
+                className="relative z-50"
+                onClose={() => setIsClueModalOpen(false)}
+              >
+                <Transition.Child
+                  as={Fragment}
+                  enter="ease-out duration-200"
+                  enterFrom="opacity-0"
+                  enterTo="opacity-100"
+                  leave="ease-in duration-150"
+                  leaveFrom="opacity-100"
+                  leaveTo="opacity-0"
+                >
+                  <div className="fixed inset-0 bg-black/40" />
+                </Transition.Child>
+
+                <div className="fixed inset-0 overflow-y-auto">
+                  <div className="flex min-h-full items-center justify-center p-4">
+                    <Transition.Child
+                      as={Fragment}
+                      enter="ease-out duration-200"
+                      enterFrom="scale-95 opacity-0"
+                      enterTo="scale-100 opacity-100"
+                      leave="ease-in duration-150"
+                      leaveFrom="scale-100 opacity-100"
+                      leaveTo="scale-95 opacity-0"
+                    >
+                      <Dialog.Panel className="w-full max-w-md transform overflow-hidden rounded-lg bg-white p-6 shadow-xl transition-all">
+                        <Dialog.Title className="text-lg font-medium text-gray-900 mb-4">
+                          AI Clued Words
+                        </Dialog.Title>
+
+                        <RevealClues clues={aiClueWords} isGameOver={true} />
+
+                        <div className="mt-6 flex justify-end">
+                          <button
+                            type="button"
+                            onClick={() => setIsClueModalOpen(false)}
+                            className="rounded bg-gray-100 px-3 py-1.5 text-sm hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                          >
+                            Close
+                          </button>
+                        </div>
+                      </Dialog.Panel>
+                    </Transition.Child>
+                  </div>
+                </div>
+              </Dialog>
+            </Transition>
+          </>
+        )}
       </div>
     </div>
   );
