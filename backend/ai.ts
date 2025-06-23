@@ -39,20 +39,28 @@ async function generateClue(game: GameType): Promise<ClueType> {
 const blueCount = game.currentTeam === "blue" ? 9 : 8;
 
   const rulesText = `
-    You are the spymaster for the ${team.toUpperCase()} team.
-    Only clue your own ${team} words; never clue words that are ${otherTeam},
-    neutral, or assassin. Prefer clues covering 4–5 of your own words.
-    Be creative and use unusual clues when possible.
-    Respond with RAW JSON only (no markdown fences) in this format:
-    {
-      "word": "<clue>",
-      "number": <n>,
-      "words": ["<guessed_word1>", "<guessed_word2>", ...]
-    }
+    You are the **SPYMASTER** for the ${team.toUpperCase()} team in the board‑game *Codenames*.
+    Follow these rules **exactly**:
+
+    1. Return **one single English word** (no spaces, hyphens, numbers, or proper nouns).
+    2. The clue **MUST** relate exclusively to your own ${team} words.
+       – It must **NOT** be connected in any way to ${otherTeam} words, neutral words, or the assassin word.
+    3. If there is any doubt that a clue might point at a non‑${team} word, pick a safer, more specific clue.
+    4. Aim for a clue that links **3–4** of your words.  
+       Only use 5 if you are **certain** no off‑team words fit.
+    5. Never reuse, rhyme with, translate, or otherwise reference any word visible on the board.
+    6. Output **raw JSON ONLY** (no markdown) in this exact schema:
+
+       {
+         "word": "<clue>",
+         "number": <n>,
+         "words": ["<your_word1>", "<your_word2>", ...]   // these must all be your team's words
+       }
   `.trim();
 
   const payload = {
     model: "gpt-4.1",
+    temperature: 0.4,
     input: [
       {
         role: "user",
