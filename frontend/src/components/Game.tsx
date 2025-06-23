@@ -159,7 +159,9 @@ export function Game({
       [indices[i], indices[j]] = [indices[j], indices[i]];
     }
     return indices;
-  }, [game.id]);
+    // Dependency array intentionally left empty so the order
+    // is computed once when the component mounts.
+  }, []);
 
   const getCardStyle = (card: Card, isRevealed: boolean) => {
     if (!isRevealed) {
@@ -193,8 +195,13 @@ export function Game({
 
 
   const [revealedCards, setRevealedCards] = useState<boolean[]>(() =>
-  game.cards.map((c) => c.revealed ?? false)
-);
+    game.cards.map((c) => c.revealed ?? false)
+  );
+
+  // Keep local reveal tracking in sync with server pushes
+  useEffect(() => {
+    setRevealedCards(game.cards.map((c) => c.revealed ?? false));
+  }, [game.cards]);
 
   // ----- Modal for revealing AI clues -----
   const [isClueModalOpen, setIsClueModalOpen] = useState(false);
