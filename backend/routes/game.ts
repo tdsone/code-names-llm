@@ -38,11 +38,9 @@ router.post("/", async (req: Request, res: Response) => {
     ### Creativity / diversity rules
     1. **Mix unrelated categories.** At most **2 words** may belong to the same obvious group (e.g.\ animals, musical instruments, foods, body parts, professions, nature‑features).  
        Example bad cluster: “Dog, Cat, Horse” (animals) – **not allowed**.
-    2. Include **at least 8 abstract or conceptual nouns** (e.g.\ “Impulse”, “Epoch”, “Orbit”, “Myth”).  
-       Abstract words make guessing trickier and more fun.
-    3. Favour **uncommon or evocative words** over everyday terms.  
+    2. Favour known, commonly used words but strive for unusual combinations. Prioritize tangible specific words instead of abstract concepts.  
        Example: choose “Zephyr” instead of “Wind”.
-    4. Avoid proper nouns, acronyms, offensive terms, or multi‑word phrases.
+    4. Avoid proper nouns, acronyms, offensive terms, or multi‑word phrases. There can't be more than one word with the same root.
     5. Balance syllable length – include short and long words.
     6. Output **RAW JSON ONLY** (no Markdown, no commentary). If you output any extra text or not exactly 25 cards, respond with an error instead.
 
