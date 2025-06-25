@@ -254,8 +254,8 @@ console.log("[Spinner-Debug]", {
 
 
   const handleCardClick = (cardIndex: number) => {
-    // Ignore clicks unless the game is in the guessing phase
-    if (game.phase !== "guessing") return;
+    // Ignore clicks unless the game is in the guessing phase *and* the AI isn't still thinking
+    if (game.phase !== "guessing" || showSpinner) return;
 
     const card = game.cards[cardIndex];
     if (!revealedCards[cardIndex]) {
@@ -472,7 +472,7 @@ console.log("[Spinner-Debug]", {
                     ${getCardStyle(card, isRevealed)} ${!isRevealed && shouldShowBorderColors && card.type === "red" ? "border-[#F05F45]" : ""} ${!isRevealed && shouldShowBorderColors && card.type === "blue" ? "border-[#6294D8]" : ""}
                     ${!card.revealed ? "hover:scale-105 cursor-pointer" : "cursor-default"}
                   `}
-                  disabled={card.revealed || game.phase !== "guessing"}
+                  disabled={card.revealed || game.phase !== "guessing" || showSpinner}
                   variant="ghost"
                 >
                   {card.word}
