@@ -17,11 +17,12 @@ import { makeAIGuesses } from "../ai";
 const games: Record<string, GameType> = {};
 
 const router = express.Router();
-const startingTeam = Math.random() < 0.5 ? "red" : "blue";
-const redCount = startingTeam === "red" ? 9 : 8;
-const blueCount = startingTeam === "blue" ? 9 : 8;
 
 router.post("/", async (req: Request, res: Response) => {
+  const startingTeam = Math.random() < 0.5 ? "red" : "blue";
+  const redCount = startingTeam === "red" ? 9 : 8;
+  const blueCount = startingTeam === "blue" ? 9 : 8;
+
   try {
     const prompt = `
     Generate a JSON array of **exactly 25 unique** Codenames cards. Each card must have:
@@ -117,6 +118,12 @@ router.post("/", async (req: Request, res: Response) => {
         // neutrals and assassin are always kept
         sanitizedCards.push(card);
       }
+    }
+
+    if (sanitizedCards.length !== 25) {
+      throw new Error(
+        `Card generation failed – expected 25 cards, got ${sanitizedCards.length}`
+      );
     }
 
     // Use the sanitized list for the game
