@@ -49,6 +49,18 @@ export function Game({
   const [previousCards, setPreviousCards] = useState<Card[]>(game.cards);
   // Track the previous team that made a move
   const [previousTeam, setPreviousTeam] = useState<GameType["currentTeam"]>(game.currentTeam);
+  // Identify the current operative early, because several hooks below depend on it
+  const currentOperative = game.teams[game.currentTeam].players.find(
+    (p) => p.role === "operative"
+  );
+  /**
+   * Show team colours only if **this viewer** is playing the spymaster role.
+   * If the viewer is an operative (human), keep cards neutral until revealed.
+   * Fall back to the old operative‑AI heuristic if humanRole is undefined.
+   */
+  const shouldShowBorderColors = humanRole
+    ? humanRole.toLowerCase() === "spymaster"
+    : (currentOperative?.agent ?? "").trim().toLowerCase() === "ai";
   // True while we're waiting for the AI spymaster to deliver a clue
   const [awaitingClue, setAwaitingClue] = useState<boolean>(
     !game.clue || !game.clue.word?.trim()
@@ -56,6 +68,31 @@ export function Game({
 
   // Force spinner to show after wrong guess if next spymaster is AI
   const [forceSpinner, setForceSpinner] = useState(false);
+
+  // ---- AI operative helpers ----------------------------------
+  // True while the AI operative is still choosing a card
+  const [awaitingGuess, setAwaitingGuess] = useState(false);
+  // Ensures the spinner shows for a perceptible duration, even if the AI guesses instantly
+  const [spinnerActive, setSpinnerActive] = useState(false);
+  // Keep spinner visible for a minimum of 600 ms once the AI operative starts thinking
+  useEffect(() => {
+    if (awaitingGuess) {
+      // AI just started thinking
+      setSpinnerActive(true);
+      return;
+    }
+    // AI finished thinking — wait 600 ms before hiding spinner so users notice it
+    if (spinnerActive) {
+      const t = setTimeout(() => setSpinnerActive(false), 600);
+      return () => clearTimeout(t);
+    }
+  }, [awaitingGuess]);
+  // Stores the word the AI operative just revealed (for banner text)
+  const [lastGuessWord, setLastGuessWord] = useState<string | null>(null);
+  // Keeps track of which cards were revealed by the AI operative
+  const [aiRevealedCards, setAiRevealedCards] = useState<boolean[]>(() =>
+    game.cards.map(() => false)
+  );
 
 
   const [showRulesModal, setShowRulesModal] = useState(false);
@@ -102,10 +139,9 @@ export function Game({
       return;
     }
     if (guessResult || turnPassed) {
-    setPreviousCards(game.cards);
-    return;
-  }
-
+      setPreviousCards(game.cards);
+      return;
+    }
 
     const newRevealedIndex = game.cards.findIndex(
       (card, i) => card.revealed && !previousCards[i]?.revealed
@@ -113,6 +149,16 @@ export function Game({
 
     // Prevent double‑handling the same card (e.g. when another update for the same turn arrives)
     if (newRevealedIndex !== -1 && newRevealedIndex !== lastRevealedIndex) {
+      // If the current operative is AI, capture its guess and stop the spinner
+      if ((currentOperative?.agent ?? "").trim().toLowerCase() === "ai") {
+        setLastGuessWord(game.cards[newRevealedIndex].word);
+        setAiRevealedCards((prev) => {
+          const clone = [...prev];
+          clone[newRevealedIndex] = true;
+          return clone;
+        });
+        setAwaitingGuess(false);
+      }
       setLastRevealedIndex(newRevealedIndex);
       const newCard = game.cards[newRevealedIndex];
       const isAssassin = newCard.type === "assassin";
@@ -125,7 +171,7 @@ export function Game({
     }
 
     setPreviousCards(game.cards);
-  }, [game.cards, game.phase, previousTeam, lastRevealedIndex, previousCards, guessResult, turnPassed]);
+  }, [game.cards, game.phase, previousTeam, lastRevealedIndex, previousCards, guessResult, turnPassed, currentOperative]);
 
   // Track the previous team when the turn switches
   useEffect(() => {
@@ -147,6 +193,20 @@ export function Game({
     }
   }, [game.clue?.word, game.clue?.number, game.phase]);
 
+  // Kick‑off AI‑operative spinner the moment a clue appears while phase is still "waiting"
+  useEffect(() => {
+    const isAIOperative =
+      (currentOperative?.agent ?? "").trim().toLowerCase() === "ai";
+
+    if (
+      game.phase === "waiting" &&
+      isAIOperative &&
+      !!game.clue?.word?.trim()
+    ) {
+      setAwaitingGuess(true);      // start the thinking spinner
+    }
+  }, [game.phase, game.clue?.word, currentOperative]);
+
   // Clear the reveal tracker when the turn switches to the other team
   useEffect(() => {
     setLastRevealedIndex(null);
@@ -163,22 +223,30 @@ export function Game({
     // is computed once when the component mounts.
   }, []);
 
+  /**
+   * Apply team colours **only** when the operative is AI (i.e. humans are spymasters).
+   * Otherwise, unrevealed cards stay neutral so human guessers can't see colours.
+   */
   const getCardStyle = (card: Card, isRevealed: boolean) => {
-    if (!isRevealed) {
-      return "bg-white border-gray-300 text-gray-900";
+    const opacityClass = isRevealed ? "opacity-40" : "!opacity-100";
+
+    // If humans are guessing (operative is human), hide colours on unrevealed cards
+    if (!shouldShowBorderColors && !isRevealed) {
+      return `bg-gray-100 text-gray-900 border-gray-300 ${opacityClass}`;
     }
 
+    // Otherwise show the full team colours
     switch (card.type) {
       case "red":
-        return "bg-[#F05F45] text-white border-[#F05F45]";
+        return `bg-[#F05F45] text-white border-[#F05F45] ${opacityClass}`;
       case "blue":
-        return "bg-[#6294D8] text-white border-[#6294D8]";
+        return `bg-[#6294D8] text-white border-[#6294D8] ${opacityClass}`;
       case "neutral":
-        return "bg-gray-400 text-white border-gray-500";
+        return `bg-gray-400 text-white border-gray-500 ${opacityClass}`;
       case "assassin":
-        return "bg-black text-white border-gray-800";
+        return `bg-black text-white border-gray-800 ${opacityClass}`;
       default:
-        return "bg-gray-100 text-gray-900 border-gray-300";
+        return `bg-gray-100 text-gray-900 border-gray-300 ${opacityClass}`;
     }
   };
 
@@ -186,11 +254,22 @@ export function Game({
     return game.currentTeam === "red" ? "Red" : "Blue";
   };
 
-  // Show coloured borders only if the operative is AI
-  const currentOperative = game.teams[game.currentTeam].players.find(
-    (p) => p.role === "operative"
-  );
-  const shouldShowBorderColors = currentOperative?.agent === "ai";
+
+  // Spinner logic for AI operative thinking
+  useEffect(() => {
+    const isAIOperative =
+      (currentOperative?.agent ?? "").trim().toLowerCase() === "ai";
+
+    if (game.phase === "guessing" && isAIOperative) {
+      // Has any new card been revealed since this guessing phase started?
+      const anyNewReveal = game.cards.some(
+        (c, i) => c.revealed && !previousCards[i]?.revealed
+      );
+      setAwaitingGuess(!anyNewReveal);
+    } else {
+      setAwaitingGuess(false);
+    }
+  }, [game.phase, game.cards, previousCards, currentOperative]);
 
 
 
@@ -237,20 +316,27 @@ export function Game({
   const phaseMessage = getPhaseDisplay();
   const currentPlayers = game.teams[game.currentTeam].players;
   const spymaster = currentPlayers.find((p) => p.role === "spymaster");
-  // Show spinner while AI spymaster hasn't delivered a real clue yet
+  // Show spinner while either (a) an AI spymaster is preparing a clue
+  // or (b) an AI operative is deciding on a guess
+  const isAISpymaster  = spymaster?.agent?.trim().toLowerCase() === "ai";
+  const isAIOperative  = currentOperative?.agent?.trim().toLowerCase() === "ai";
+
   const showSpinner =
-    spymaster?.agent?.trim().toLowerCase() === "ai" &&
-    (forceSpinner || awaitingClue);
+    (isAISpymaster && (forceSpinner || awaitingClue)) ||
+    (isAIOperative && spinnerActive);
 
   // --- DEBUG: spinner state --------------------------------------
-console.log("[Spinner-Debug]", {
-  phase: game.phase,
-  clueWord: game.clue?.word ?? "(none)",
-  awaitingClue,
-  forceSpinner,
-  spymasterAgent: spymaster?.agent,
-  showSpinner
-});
+  console.log("[Spinner‑Debug]", {
+    phase: game.phase,
+    clueWord: game.clue?.word ?? "(none)",
+    awaitingClue,
+    awaitingGuess,
+    forceSpinner,
+    isAISpymaster,
+    isAIOperative,
+    showSpinner,
+    spinnerActive,
+  });
 
 
   const handleCardClick = (cardIndex: number) => {
@@ -335,11 +421,16 @@ console.log("[Spinner-Debug]", {
             : guessResult === "assassin"
               ? "bg-black"
               : "bg-red-600"}`}>
+            {lastGuessWord && (
+              <>
+                AI guessed "<span className="underline">{lastGuessWord}</span>" —{" "}
+              </>
+            )}
             {guessResult === "right"
-              ? "Right Guess!"
+              ? "Correct!"
               : guessResult === "assassin"
-                ? "Assassin Card – Game Over"
-                : "Wrong Guess!"}
+              ? "Assassin Card – Game Over"
+              : "Wrong!"}
           </div>
         )}
         {turnPassed && (
@@ -459,7 +550,15 @@ console.log("[Spinner-Debug]", {
           </div>
 
           {/* Game Board */}
-          <div className="lg:w-4/5 w-full grid grid-cols-5 gap-4 mb-8">
+          <div className="relative lg:w-4/5 w-full grid grid-cols-5 gap-4 mb-8">
+            {showSpinner && (
+              <div className="absolute inset-0 bg-white/60 dark:bg-gray-900/60 flex flex-col items-center justify-center z-50 pointer-events-none">
+                <LoadingSpinner />
+                <span className="mt-4 text-gray-800 dark:text-gray-200 font-semibold">
+                  AI operative is thinking…
+                </span>
+              </div>
+            )}
             {shuffledIndices.map((realIndex) => {
               const card = game.cards[realIndex];
               const isRevealed = revealedCards[realIndex] || !!revealAll;
@@ -468,14 +567,19 @@ console.log("[Spinner-Debug]", {
                   key={realIndex}
                   onClick={() => handleCardClick(realIndex)}
                   className={`
-                    h-24 md:text-lg font-semibold border-2 transition-all duration-200
-                    ${getCardStyle(card, isRevealed)} ${!isRevealed && shouldShowBorderColors && card.type === "red" ? "border-[#F05F45]" : ""} ${!isRevealed && shouldShowBorderColors && card.type === "blue" ? "border-[#6294D8]" : ""}
+                    relative h-24 md:text-lg font-semibold border-2 transition-all duration-200
+                    ${getCardStyle(card, !!card.revealed)}
                     ${!card.revealed ? "hover:scale-105 cursor-pointer" : "cursor-default"}
+                    ${isRevealed && aiRevealedCards[realIndex] ? " ring-4 ring-yellow-300" : ""}
                   `}
                   disabled={card.revealed || game.phase !== "guessing" || showSpinner}
-                  variant="ghost"
                 >
-                  {card.word}
+                  <span>{card.word}</span>
+                  {isRevealed && aiRevealedCards[realIndex] && (
+                    <span className="absolute top-0 left-0 m-1 px-1.5 rounded bg-yellow-400 text-[10px] font-bold text-gray-900">
+                      AI
+                    </span>
+                  )}
                 </Button>
               );
             })}
@@ -490,7 +594,7 @@ console.log("[Spinner-Debug]", {
                 You are the <span className="font-bold">{humanRole}</span> — send AI a clue.
               </div>
             )}
-            {isHumanSpymasterTurn && onSubmitClue && (
+            {isHumanSpymasterTurn && onSubmitClue && awaitingClue && (
               <ClueForm onSubmit={onSubmitClue} />
             )}
           </div>
