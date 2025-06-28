@@ -533,7 +533,7 @@ console.log("[Spinner-Debug]", {
               <button
                 type="button"
                 onClick={() => setIsClueModalOpen(true)}
-                className="rounded bg-indigo-600 px-4 py-2 text-white hover:bg-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                className="rounded bg-[#F05F45] px-4 py-2 text-white hover:bg-[#F05F45] focus:outline-none focus:ring-2 focus:ring-[#F05F45]"
               >
                 Reveal AI clues
               </button>

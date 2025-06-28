@@ -1,8 +1,10 @@
 import React from 'react';
 
+type Clue = string | { clue: string; words: string[] };
+
 interface RevealCluesProps {
-  /** List of words that the AI used as clues */
-  clues: string[];
+  /** List of raw clues – either plain strings or { clue, words } objects */
+  clues?: Clue[];
   /** Indicates whether the current round is finished */
   isGameOver: boolean;
 }
@@ -11,7 +13,7 @@ interface RevealCluesProps {
  * Displays the list of AI‑generated clue words once the game is over.
  * Until then, a placeholder message is shown so players can't peek early.
  */
-const RevealClues: React.FC<RevealCluesProps> = ({ clues, isGameOver }) => {
+const RevealClues: React.FC<RevealCluesProps> = ({ clues = [], isGameOver }) => {
   if (!isGameOver) {
     return (
       <div className="clues-hidden">
@@ -32,10 +34,11 @@ const RevealClues: React.FC<RevealCluesProps> = ({ clues, isGameOver }) => {
 
   return (
     <div className="reveal-clues">
-      <h3 className="font-semibold mb-2">AI Clued Words</h3>
       <ul className="list-disc pl-5 space-y-1">
-        {clues.map((word) => (
-          <li key={word}>{word}</li>
+        {clues.map((c, idx) => (
+          <li key={idx}>
+            {typeof c === "string" ? c : `${c.clue} – ${c.words.join(", ")}`}
+          </li>
         ))}
       </ul>
     </div>

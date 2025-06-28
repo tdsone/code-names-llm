@@ -120,13 +120,74 @@ router.post("/", async (req: Request, res: Response) => {
       }
     }
 
+    // --- refill any missing card types to reach exact required counts --------
+    const requiredCounts = { red: redCount, blue: blueCount, neutral: 7, assassin: 1 };
+
+    const currentCounts = {
+      red: sanitizedCards.filter(c => c.type === "red").length,
+      blue: sanitizedCards.filter(c => c.type === "blue").length,
+      neutral: sanitizedCards.filter(c => c.type === "neutral").length,
+      assassin: sanitizedCards.filter(c => c.type === "assassin").length,
+    };
+
+    console.log("Raw counts:", rawCards.reduce((acc, c) => {
+      acc[c.type] = (acc[c.type] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>));
+
+    console.log("Counts after initial trim:", currentCounts);
+
+    // Cards we skipped earlier because they exceeded per‑team limits
+    const overflowCards = rawCards.filter(c => !sanitizedCards.includes(c));
+
+    // helper to pull a card of a specific type from overflowCards
+    const pullFromOverflow = (type: CardType["type"]) => {
+      const idx = overflowCards.findIndex(c => c.type === type);
+      if (idx === -1) return false;         // none left of this type
+      sanitizedCards.push(overflowCards[idx]);
+      overflowCards.splice(idx, 1);
+      return true;
+    };
+
+    // Top up each team / type until we meet the required counts
+    (["red", "blue", "neutral", "assassin"] as const).forEach((type) => {
+      while (currentCounts[type] < requiredCounts[type]) {
+        // 1️⃣ First, try to pull a correct‑type card from overflow
+        if (pullFromOverflow(type)) {
+          currentCounts[type]++;
+          continue;
+        }
+
+        // 2️⃣ Otherwise, repurpose ANY overflow card by re‑labelling it
+        if (overflowCards.length > 0) {
+          const donorCard = overflowCards.shift()!; // remove first
+          donorCard.type = type;                    // mutate to needed type
+          sanitizedCards.push(donorCard);
+          currentCounts[type]++;
+          continue;
+        }
+
+        // 3️⃣ Nothing left to use – break out to avoid infinite loop
+        break;
+      }
+    });
+
+    console.log("Counts after refill:", {
+      red: sanitizedCards.filter(c => c.type === "red").length,
+      blue: sanitizedCards.filter(c => c.type === "blue").length,
+      neutral: sanitizedCards.filter(c => c.type === "neutral").length,
+      assassin: sanitizedCards.filter(c => c.type === "assassin").length,
+    });
+
+    // Final guard and assignment
     if (sanitizedCards.length !== 25) {
+      console.error(
+        `Card generation failed – expected 25 cards, got ${sanitizedCards.length}`
+      );
       throw new Error(
         `Card generation failed – expected 25 cards, got ${sanitizedCards.length}`
       );
     }
-
-    // Use the sanitized list for the game
     const cards = sanitizedCards;
 
     const { teams } = req.body || {};
