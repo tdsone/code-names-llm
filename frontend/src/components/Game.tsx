@@ -148,9 +148,16 @@ export function Game({
   }, [turnPassed]);
 
   useEffect(() => {
-    // Only run banner logic while the operative is guessing
-    if (game.phase !== "guessing") {
-      // Keep previousCards in sync so that the next turn starts clean
+    // 👇 For AI‑operative turns we sometimes receive the reveal after the
+    // backend has already flipped the phase to "waiting". Treat that case
+    // the same as "guessing" so banners still appear.
+    const aiRevealDuringWaiting =
+      game.phase === "waiting" &&
+      (currentOperative?.agent ?? "").trim().toLowerCase() === "ai";
+
+    // Skip processing only if it's neither the guessing phase nor the
+    // special AI‑waiting scenario.
+    if (game.phase !== "guessing" && !aiRevealDuringWaiting) {
       setPreviousCards(game.cards);
       return;
     }
@@ -344,19 +351,6 @@ export function Game({
     (isAISpymaster && (forceSpinner || awaitingClue)) ||
     (isAIOperative && spinnerActive);
 
-  // --- DEBUG: spinner state --------------------------------------
-  console.log("[Spinner‑Debug]", {
-    phase: game.phase,
-    clueWord: game.clue?.word ?? "(none)",
-    awaitingClue,
-    awaitingGuess,
-    forceSpinner,
-    isAISpymaster,
-    isAIOperative,
-    showSpinner,
-    spinnerActive,
-  });
-
 
   const handleCardClick = (cardIndex: number) => {
     // Ignore clicks unless the game is in the guessing phase *and* the AI isn't still thinking
@@ -450,6 +444,14 @@ export function Game({
               : guessResult === "assassin"
               ? "Assassin Card – Game Over"
               : "Wrong!"}
+          </div>
+        )}
+        {isGameOver && !guessResult && (
+          <div className="absolute top-10 left-1/2 transform -translate-x-1/2 px-6 py-2 rounded bg-black text-white text-xl font-bold shadow-md z-50 transition-opacity duration-500">
+            Game Over!{" "}
+            {("winner" in game && game.winner)
+              ? `${game.winner.charAt(0).toUpperCase()}${game.winner.slice(1)} team wins!`
+              : ""}
           </div>
         )}
         {turnPassed && (
