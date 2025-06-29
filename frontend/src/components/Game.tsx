@@ -94,7 +94,23 @@ export function Game({
     game.cards.map(() => false)
   );
 
-
+  /**
+   * Wrapper around the upstream onSubmitClue handler.
+   * Triggers the AI‑thinking spinner as soon as the human spymaster
+   * submits a clue, so users immediately see feedback.
+   */
+  const handleSubmitClue = ({ word, number }: { word: string; number: number }) => {
+    // Forward the clue to the parent handler first
+    if (onSubmitClue) {
+      onSubmitClue({ word, number });
+    }
+    // If the current operative is an AI, start the "thinking" spinner right away
+    const operative = game.teams[game.currentTeam].players.find((p) => p.role === "operative");
+    if ((operative?.agent ?? "").trim().toLowerCase() === "ai") {
+      setAwaitingGuess(true);
+    }
+  };
+  // ---- AI operative helpers ----------------------------------
   const [showRulesModal, setShowRulesModal] = useState(false);
   // Controls visibility of the About modal
   const [showAboutModal, setShowAboutModal] = useState(false);
@@ -284,7 +300,10 @@ export function Game({
 
   // ----- Modal for revealing AI clues -----
   const [isClueModalOpen, setIsClueModalOpen] = useState(false);
-  const isGameOver = game.phase === "finished";           // adjust if your logic differs
+  const assassinRevealed = game.cards.some(
+    (c) => c.type === "assassin" && c.revealed
+  );
+  const isGameOver = game.phase === "finished" || assassinRevealed;
   // Adjust this if your backend exposes a different property
   const aiClueWords: string[] = (game as any).aiClueWords ?? [];
 
@@ -595,7 +614,7 @@ export function Game({
               </div>
             )}
             {isHumanSpymasterTurn && onSubmitClue && awaitingClue && (
-              <ClueForm onSubmit={onSubmitClue} />
+              <ClueForm onSubmit={handleSubmitClue} />
             )}
           </div>
         )}

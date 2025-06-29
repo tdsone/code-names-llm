@@ -5,6 +5,8 @@ import type {
   Clue as ClueType,
   Player as PlayerType,
 } from "../shared/types";
+import { applyReveal } from "./applyReveal";
+
 
 // ▸ Which player is spymaster for the active team?
 export function getActiveSpymaster(game: GameType): PlayerType {
@@ -147,37 +149,16 @@ export async function makeAIGuesses(game: GameType): Promise<void> {
     .trim();
 
   const result = JSON.parse(jsonText) as { guesses: number[] };
-  let turnShouldEnd = false;
 
   for (const index of result.guesses) {
-  await new Promise((resolve) => setTimeout(resolve, 1000)); // 1 second delay
+    // ⏳ small delay so the UI shows guesses one by one
+    await new Promise((resolve) => setTimeout(resolve, 1000));
 
-  if (!game.cards[index].revealed) {
-    game.cards[index].revealed = true;
-    game.guessesRemaining!--;
+    // 🔄 apply all reveal / game‑over / end‑turn rules in ONE place
+    await applyReveal(game, index);
 
-    const card = game.cards[index];
-    if (card.type !== game.currentTeam) {
-      turnShouldEnd = true;
-      break;
-    }
-
-    if (card.type === "assassin" as typeof card.type) {
-      game.phase = "finished";
-      return;
-    }
-
-    if (game.guessesRemaining! <= 0) {
-      turnShouldEnd = true;
-      break;
-    }
-  }
-}
-
-  if (turnShouldEnd) {
-    game.currentTeam = game.currentTeam === "red" ? "blue" : "red";
-    game.phase = "waiting";
-    game.clue = undefined;
-    game.guessesRemaining = undefined;
+    // If the reveal ended the turn (phase changed away from "guessing"),
+    // stop making further guesses.
+    if (game.phase !== "guessing") return;
   }
 }

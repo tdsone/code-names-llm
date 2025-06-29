@@ -12,6 +12,7 @@ import type {
 import { v4 as uuidv4 } from "uuid";
 import { maybeGenerateClue } from "../ai";
 import { makeAIGuesses } from "../ai";
+import { applyReveal } from "../applyReveal";
 
 // Store all active games keyed by their ID
 const games: Record<string, GameType> = {};
@@ -347,25 +348,6 @@ router.post("/:id/clue", async (req, res) => {
   res.json({ success: true, game });
 });
 
-
-// helper that swaps teams when a turn ends
-async function endTurn(game: GameType): Promise<void> {
-  game.currentTeam = game.currentTeam === "red" ? "blue" : "red";
-  game.phase = "waiting";
-  game.clue = undefined;
-  game.guessesRemaining = undefined;
-
-  await maybeGenerateClue(game);
-  // Persist the AI‑generated clue *targets* (the words the clue points to)
-  const currentClue   = (game.clue as ClueType | undefined);
-  if (currentClue) {
-    (game.aiClueWords ??= []).push({
-      clue: currentClue.word,
-      words: currentClue.words ?? [],
-    });
-  }
-}
-
 /**
  * PUT /game/:id/cards/:index
  * Flip a single card for the active team.
@@ -415,31 +397,8 @@ router.put("/:id/cards/:index", async (req: Request, res: Response) => {
   }
 
   // --- outcome logic --------------------------------------------------------
-  const wrongTeam   = card.type !== team && card.type !== "neutral";
-  const assassin    = card.type === "assassin";
-  const redWon = game.cards
-    .filter((c) => c.type === "red")
-    .every((c) => c.revealed);
-
-  const blueWon = game.cards
-    .filter((c) => c.type === "blue")
-    .every((c) => c.revealed);
-  const noGuesses   =
-    game.guessesRemaining !== undefined && game.guessesRemaining <= 0;
-  const neutral     = card.type === "neutral";
-
-  if (assassin) {
-    game.phase  = "finished";
-    game.winner = team === "red" ? "blue" : "red";
-  } else if (redWon || blueWon) {
-    game.phase  = "finished";
-    game.winner = redWon ? "red" : "blue";
-  } else if (neutral || wrongTeam || noGuesses) {
-    // delegate turn‑end housekeeping (and possible AI clue) to helper
-    await endTurn(game);
-  }
-
-  res.json({ success: true, game, flipped: card });
+    await applyReveal(game, i);
+  res.json({ success: true, game, flipped: game.cards[i] });
 });
 
 
@@ -459,5 +418,7 @@ router.post("/:id/ai-clue", async (req, res) => {
   }
   res.json({ success: true, game });
 });
+
+
 
 export default router;
