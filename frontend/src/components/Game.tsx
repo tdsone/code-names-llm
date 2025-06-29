@@ -386,7 +386,8 @@ export function Game({
   };
 
   return (
-    <div className="min-h-screen w-full bg-gradient-to-b from-[#F05F4533] to-[#6294D833] dark:from-gray-900 dark:to-gray-800 p-4">
+    <div className="min-h-screen w-full bg-gradient-to-b from-[#F05F4533] to-[#6294D833] dark:from-gray-900 dark:to-gray-800
+           px-2 sm:px-4 pt-0 sm:pt-4 pb-4 sm:mt-4">
       {showRulesModal && (
         <div
           className="fixed inset-0 bg-transparent flex items-start justify-center z-50 overflow-y-auto"
@@ -460,8 +461,8 @@ export function Game({
           </div>
         )}
         {/* Game Header */}
-        <header className="w-full flex flex-nowrap items-center py-4 px-4 sm:px-6 bg-white dark:bg-gray-900 shadow-md mb-6 rounded-lg">
-          <div className="flex items-center space-x-4">
+        <header className="w-full flex flex-nowrap items-center py-4 px-4 sm:px-6 bg-white dark:bg-gray-900 shadow-md mb-6 rounded-lg mt-2">
+          <div className="flex items-center space-x-4 mt-2">
             <img src={Clu3Logo} alt="Clu3 Logo" className="lg:h-10 w-auto h-4 flex-shrink-0 mr-4" />
           </div>
           <div className="flex gap-2 sm:gap-4 ml-auto">

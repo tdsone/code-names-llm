@@ -117,7 +117,7 @@ const human = currentGame
 
   if (currentGame) {
     return (
-      <div className="flex flex-col items-center mt-6">
+      <div className="flex flex-col items-center mt-0">
         <Game
           game={currentGame}
           onCardClick={handleCardClick}
