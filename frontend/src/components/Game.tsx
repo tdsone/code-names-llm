@@ -38,7 +38,6 @@ export function Game({
   game: initialGame,
   revealAll,
   isHumanSpymasterTurn,
-  onCardClick,
   humanRole,
   showHumanInfo,
   onSubmitClue,
