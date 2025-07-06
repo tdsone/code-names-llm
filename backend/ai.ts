@@ -50,7 +50,7 @@ const blueCount = game.currentTeam === "blue" ? 9 : 8;
     3. If there is any doubt that a clue might point at a non‑${team} word, pick a safer, more specific clue.
     4. Aim for a clue that links **3–4** of your words.  
        Only use 5 if you are **certain** no off‑team words fit.
-    5. Never reuse, rhyme with, translate, or otherwise reference any word visible on the board.
+    5. Never reuse, rhyme with, translate, or otherwise reference any word visible on the board. Example: do NOT clue the word "jungle" with the clue "jungle".
     6. Output **raw JSON ONLY** (no markdown) in this exact schema:
 
        {

@@ -25,6 +25,9 @@ export interface Game {
   aiClueWords: ClueHistoryItem[];
   guessesRemaining?: number;
   winner?: "red" | "blue";
+  clueRating?: number;
+  guessRating?: number;
+
   createdAt: Date;
 }
 

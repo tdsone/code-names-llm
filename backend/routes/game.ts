@@ -14,6 +14,25 @@ import { maybeGenerateClue } from "../ai";
 import { makeAIGuesses } from "../ai";
 import { applyReveal } from "../applyReveal";
 
+import { createClient } from "@supabase/supabase-js";
+
+// ─── helper: let the active team voluntarily end its guessing phase ──────────
+function passTurn(game: GameType) {
+  // Only valid while the active team is still guessing
+  if (game.phase !== "guessing") {
+    throw new Error("Cannot pass when not in guessing phase");
+  }
+
+  // Flip to the other team
+  game.currentTeam = game.currentTeam === "red" ? "blue" : "red";
+
+  // Reset per‑turn fields so the next spymaster can give a new clue
+  game.phase = "waiting";     // expecting clue
+  game.clue  = undefined;
+  game.guessesRemaining = undefined;
+}
+
+
 // Store all active games keyed by their ID
 const games: Record<string, GameType> = {};
 
@@ -99,12 +118,22 @@ router.post("/", async (req: Request, res: Response) => {
       revealed: false,
     }));
 
+    // Remove duplicate cards based on the word property
+    const seenWords = new Set<string>();
+    const uniqueRawCards: CardType[] = [];
+    for (const card of rawCards) {
+      if (!seenWords.has(card.word)) {
+        seenWords.add(card.word);
+        uniqueRawCards.push(card);
+      }
+    }
+
     // --- post‑process to enforce card limits --------------------
     let redSeen = 0;
     let blueSeen = 0;
     const sanitizedCards: CardType[] = [];
 
-    for (const card of rawCards) {
+    for (const card of uniqueRawCards) {
       if (card.type === "red") {
         if (redSeen < redCount) {
           sanitizedCards.push(card);
@@ -131,7 +160,7 @@ router.post("/", async (req: Request, res: Response) => {
       assassin: sanitizedCards.filter(c => c.type === "assassin").length,
     };
 
-    console.log("Raw counts:", rawCards.reduce((acc, c) => {
+    console.log("Raw counts:", uniqueRawCards.reduce((acc, c) => {
       acc[c.type] = (acc[c.type] || 0) + 1;
       return acc;
     }, {} as Record<string, number>));
@@ -139,7 +168,7 @@ router.post("/", async (req: Request, res: Response) => {
     console.log("Counts after initial trim:", currentCounts);
 
     // Cards we skipped earlier because they exceeded per‑team limits
-    const overflowCards = rawCards.filter(c => !sanitizedCards.includes(c));
+    const overflowCards = uniqueRawCards.filter(c => !sanitizedCards.includes(c));
 
     // helper to pull a card of a specific type from overflowCards
     const pullFromOverflow = (type: CardType["type"]) => {
@@ -348,6 +377,55 @@ router.post("/:id/clue", async (req, res) => {
   res.json({ success: true, game });
 });
 
+
+// POST /games/:id/pass   Body: { team: "red" | "blue" }
+//@ts-ignore
+router.post("/:id/pass", async (req: Request, res: Response) => {
+  const { id }   = req.params;
+  const { team } = req.body as { team: "red" | "blue" };
+
+  const game = games[id];
+  if (!game) {
+    return res.status(404).json({ success: false, message: "Game not found." });
+  }
+
+  // ── guards ────────────────────────────────────────────────────────────────
+  if (game.phase !== "guessing") {
+    return res.status(409).json({ success: false, message: "No guesses allowed right now." });
+  }
+  if (team !== game.currentTeam) {
+    return res.status(409).json({ success: false, message: "It's not your team's turn." });
+  }
+
+  try {
+    /** 1️⃣ flip team & reset per-turn fields */
+    passTurn(game);
+
+    /** 2️⃣ if the NEW spymaster is AI, let it give a clue immediately */
+    const newSpymaster = game.teams[game.currentTeam].players.find(p => p.role === "spymaster");
+    if (newSpymaster?.agent === "ai") {
+      await maybeGenerateClue(game);
+
+      // store the words that clue is pointing to (history)
+      const currentClue = game.clue as ClueType | undefined;
+      if (currentClue) {
+        (game.aiClueWords ??= []).push({
+          clue:  currentClue.word,
+          words: currentClue.words ?? [],
+        });
+      }
+    }
+
+    /** 3️⃣  ⇒ MAKE SURE THE MAP HOLDS THE UPDATED OBJECT  */
+    games[id] = game;   // <-- IMPORTANT when you don't persist anywhere else
+
+    /** 4️⃣  respond */
+    return res.json({ success: true, game });
+  } catch (err: any) {
+    return res.status(400).json({ success: false, message: err.message });
+  }
+});
+
 /**
  * PUT /game/:id/cards/:index
  * Flip a single card for the active team.
@@ -364,7 +442,8 @@ router.put("/:id/cards/:index", async (req: Request, res: Response) => {
   }
 
   // --- basic guards ---------------------------------------------------------
-  if (game.phase !== "guessing") {
+  const currentPhase = game.phase;
+  if (currentPhase !== "guessing") {
     return res
       .status(409)
       .json({ success: false, message: "No guesses allowed right now." });
@@ -389,15 +468,29 @@ router.put("/:id/cards/:index", async (req: Request, res: Response) => {
       .status(409)
       .json({ success: false, message: "Card already revealed." });
   }
+  // --- outcome logic --------------------------------------------------------
+  applyReveal(game, i);
 
-  // --- reveal the card ------------------------------------------------------
-  card.revealed = true;
-  if (game.guessesRemaining !== undefined) {
-    game.guessesRemaining -= 1;
+  // If the turn just ended and the NEW spymaster is AI, generate a clue now.
+  const newPhase: GameType["phase"] = game.phase;
+  if (newPhase === "waiting") {
+    const newSpymaster = game.teams[game.currentTeam].players.find(
+      (p) => p.role === "spymaster"
+    );
+    if (newSpymaster?.agent === "ai") {
+      await maybeGenerateClue(game);
+
+      // Persist clue history
+      const currentClue = game.clue as ClueType | undefined;
+      if (currentClue) {
+        (game.aiClueWords ??= []).push({
+          clue: currentClue.word,
+          words: currentClue.words ?? [],
+        });
+      }
+    }
   }
 
-  // --- outcome logic --------------------------------------------------------
-    await applyReveal(game, i);
   res.json({ success: true, game, flipped: game.cards[i] });
 });
 
@@ -419,6 +512,152 @@ router.post("/:id/ai-clue", async (req, res) => {
   res.json({ success: true, game });
 });
 
+/**
+ * POST /game/:id/rating
+ * Body:
+ *   {
+ *     "rating": 3,               // integer 1‑5
+ *     "category": "clue" | "guess"   // which rating we’re saving
+ *   }
+ *
+ * The route validates input, updates the corresponding field
+ * (clueRating or guessRating) on the Game object, and returns the updated game.
+ */
+//@ts-ignore
+router.post("/:id/rating", (req: Request, res: Response) => {
+  const { id } = req.params;
+  const { rating, category } = req.body as {
+    rating: number;
+    category: "clue" | "guess";
+  };
+
+  const game = games[id];
+  if (!game) {
+    return res.status(404).json({ success: false, message: "Game not found." });
+  }
+
+  // Validate rating value
+  if (![1, 2, 3, 4, 5].includes(rating)) {
+    return res
+      .status(400)
+      .json({ success: false, message: "Rating must be an integer 1‑5." });
+  }
+
+  // Validate category
+  if (category !== "clue" && category !== "guess") {
+    return res
+      .status(400)
+      .json({ success: false, message: "Category must be 'clue' or 'guess'." });
+  }
+
+  // Update the appropriate field on the game
+  if (category === "clue") {
+    game.clueRating = rating;
+  } else {
+    game.guessRating = rating;
+  }
+
+  res.json({ success: true, game });
+});
+
+// send data to supabase
+const supabase = createClient(
+  process.env.SUPABASE_URL as string,
+  process.env.SUPABASE_KEY as string
+);
+
+/**
+ * Persists a finished game to Supabase.
+ * Expects the game to be in phase "finished" and at least one rating present.
+ */
+//@ts-ignore
+router.post("/:id/save", async (req: Request, res: Response) => {
+  const { id } = req.params;
+  const game = games[id];
+
+  if (!game) {
+    return res.status(404).json({ success: false, message: "Game not found." });
+  }
+
+  if (game.phase !== "finished") {
+    return res
+      .status(400)
+      .json({ success: false, message: "Game is not finished yet." });
+  }
+
+  if (game.clueRating === undefined && game.guessRating === undefined) {
+    return res.status(400).json({
+      success: false,
+      message: "No ratings submitted yet; nothing to save.",
+    });
+  }
+
+  try {
+    await saveGameToSupabase(game);
+    res.json({ success: true });
+  } catch (err: any) {
+    res
+      .status(500)
+      .json({ success: false, message: err.message ?? "Unknown error" });
+  }
+});
+
+/**
+ * Persist a finished game (with ratings) to Supabase table `clue3`.
+ * - Stores a few scalar columns for quick queries and the full JSON blob.
+ */
+async function saveGameToSupabase(game: GameType) {
+  // Derive player names and human/AI roles
+  const redSpymaster   = game.teams.red.players.find(p => p.role === "spymaster");
+  const redOperative   = game.teams.red.players.find(p => p.role === "operative");
+  const blueSpymaster  = game.teams.blue.players.find(p => p.role === "spymaster");
+  const blueOperative  = game.teams.blue.players.find(p => p.role === "operative");
+  // Only include human players for each team
+const redHumanPlayers = game.teams.red.players.filter(p => p.agent === "human");
+const blueHumanPlayers = game.teams.blue.players.filter(p => p.agent === "human");
+
+const player_red = redHumanPlayers
+  .map(p => `${p.name}${p.role === "spymaster" ? " (S)" : " (O)"}`)
+  .join(", ");
+
+const player_blue = blueHumanPlayers
+  .map(p => `${p.name}${p.role === "spymaster" ? " (S)" : " (O)"}`)
+  .join(", ");
+
+  /** "human" if ANY operative is human, otherwise "ai" */
+  const operativeRole  =
+    redOperative?.agent === "human" || blueOperative?.agent === "human"
+      ? "human"
+      : "ai";
+
+  /** "human" if ANY spymaster is human, otherwise "ai" */
+  const spymasterRole  =
+    redSpymaster?.agent === "human" || blueSpymaster?.agent === "human"
+      ? "human"
+      : "ai";
+
+  const row = {
+    id: game.id,                                // PK
+    created_at: game.createdAt.toISOString(),   // timestamptz
+    winner: game.winner ?? null,                // text
+    player_red:  player_red,
+    player_blue: player_blue,
+    operative:   operativeRole,                 // "human" / "ai"
+    spymaster:   spymasterRole,                 // "human" / "ai"
+    AI_clues_rating:   game.clueRating  ?? null,  // int2
+    AI_guesses_rating: game.guessRating ?? null,  // int2
+    json: JSON.stringify(game),                 // jsonb (full game object)
+  };
+
+  const { error } = await supabase
+    .from("clu3")
+    .upsert(row, { onConflict: "id" });         // insert or update by id
+
+  if (error) {
+    console.error("Supabase upsert error:", error.message);
+    throw new Error("Failed to save game to Supabase");
+  }
+}
 
 
 export default router;

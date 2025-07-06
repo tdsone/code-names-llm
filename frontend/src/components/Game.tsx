@@ -25,28 +25,33 @@ export function LoadingSpinner() {
 
 interface GameProps {
   game: GameType;
-  onCardClick: (cardIndex: number) => void;
+  onCardClick?: (cardIndex: number) => void;
   revealAll?: boolean;
   isHumanSpymasterTurn?: boolean;
   humanRole?: string;
   showHumanInfo?: boolean;
   onSubmitClue?: ({ word, number }: { word: string; number: number }) => void;
+  onGameUpdate?: (g: GameType) => void;
 }
 
 export function Game({
-  game,
-  onCardClick,
+  game: initialGame,
   revealAll,
   isHumanSpymasterTurn,
+  onCardClick,
   humanRole,
   showHumanInfo,
   onSubmitClue,
+  onGameUpdate,
 }: GameProps) {
   const [guessResult, setGuessResult] = useState<"right" | "wrong" | "assassin" | null>(null);
+  const [game, setGame] = useState<GameType>(initialGame);
   // Temporarily hides the clue after a wrong guess
   const [hideClue, setHideClue] = useState(false);
   const [turnPassed, setTurnPassed] = useState(false);
   const [previousCards, setPreviousCards] = useState<Card[]>(game.cards);
+  // ----- Post‑game feedback banner -----
+  const [feedbackSubmitted, setFeedbackSubmitted] = useState(false);
   // Track the previous team that made a move
   const [previousTeam, setPreviousTeam] = useState<GameType["currentTeam"]>(game.currentTeam);
   // Identify the current operative early, because several hooks below depend on it
@@ -74,6 +79,10 @@ export function Game({
   const [awaitingGuess, setAwaitingGuess] = useState(false);
   // Ensures the spinner shows for a perceptible duration, even if the AI guesses instantly
   const [spinnerActive, setSpinnerActive] = useState(false);
+
+  useEffect(() => {
+    setGame(initialGame);
+  }, [initialGame]);
   // Keep spinner visible for a minimum of 600 ms once the AI operative starts thinking
   useEffect(() => {
     if (awaitingGuess) {
@@ -133,6 +142,16 @@ export function Game({
           setForceSpinner(true);
         }
       }, 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [guessResult]);
+
+  // Auto-dismiss the "assassin" banner after 5 seconds
+  useEffect(() => {
+    if (guessResult === "assassin") {
+      const timer = setTimeout(() => {
+        setGuessResult(null);
+      }, 5000);
       return () => clearTimeout(timer);
     }
   }, [guessResult]);
@@ -352,37 +371,107 @@ export function Game({
     (isAIOperative && spinnerActive);
 
 
-  const handleCardClick = (cardIndex: number) => {
-    // Ignore clicks unless the game is in the guessing phase *and* the AI isn't still thinking
-    if (game.phase !== "guessing" || showSpinner) return;
+  const handleCardClick = async (cardIndex: number) => {
+  // Ignore clicks unless guessing and no AI spinner
+  if (game.phase !== "guessing" || showSpinner) return;
 
-    const card = game.cards[cardIndex];
-    if (!revealedCards[cardIndex]) {
-      if (card.type === "assassin") {
-        setGuessResult("assassin");
-        // Remember that we've already handled this reveal locally
-        setLastRevealedIndex(cardIndex);
-      } else {
-        const isCorrect = card.type === game.currentTeam;
-        setGuessResult(isCorrect ? "right" : "wrong");
-        // Remember that we've already handled this reveal locally
-        setLastRevealedIndex(cardIndex);
-      }
+  // Local feedback (unchanged) ───────────────────────────────
+  const card = game.cards[cardIndex];
+  if (!revealedCards[cardIndex]) {
+    const isCorrect = card.type === game.currentTeam;
+    if (card.type === "assassin") setGuessResult("assassin");
+    else setGuessResult(isCorrect ? "right" : "wrong");
 
-      // Optimistically reveal the card
-      setRevealedCards((prev) => {
-        const updated = [...prev];
-        updated[cardIndex] = true;
-        return updated;
-      });
+    setLastRevealedIndex(cardIndex);
+    setRevealedCards(prev => {
+      const copy = [...prev];
+      copy[cardIndex] = true;
+      return copy;
+    });
+  }
+
+  // 🔑  SEND the guess with the *current* team every time
+  try {
+    const res  = await fetch(`/api/game/${game.id}/cards/${cardIndex}`, {
+      method : "PUT",
+      headers: { "Content-Type": "application/json" },
+      body   : JSON.stringify({ team: game.currentTeam }),   // always fresh
+    });
+    const data = await res.json();
+    if (res.ok && data.success) {
+      // Push updated game from server
+      onGameUpdate ? onGameUpdate(data.game) : setGame(data.game);
+    } else {
+      console.error("Guess failed:", data.message ?? res.statusText);
+    }
+  } catch (err) {
+    console.error("Network error:", err);
+  }
+
+};
+
+const handleEndTurn = async () => {
+  // Only the operative can end the turn while it's still guessing and no AI spinner is active
+  if (game.phase !== "guessing" || showSpinner) return;
+
+  try {
+    const res = await fetch(`/api/game/${game.id}/pass`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ team: game.currentTeam }),
+    });
+
+    const data = await res.json();
+    if (!res.ok || !data.success) {
+      alert(data.message ?? res.statusText);
+      return;
     }
 
-    onCardClick(cardIndex);
+    // Prefer the parent‑supplied setter if available; otherwise fall back to local state.
+    if (onGameUpdate) {
+      onGameUpdate(data.game);
+    } else {
+      setGame(data.game);
+    }
+  } catch (err) {
+    console.error("End turn failed:", err);
   }
+};
+
+  
 
   // Resets the app to its initial landing screen
   const handleStartNewGame = () => {
     window.location.reload(); // simplest reset for now
+  };
+
+  /**
+   * Persist the user's 1‑5 rating for AI clues/guesses, then
+   * trigger the backend to save the finished game to Supabase.
+   */
+  const submitRating = async (rating: number) => {
+    if (feedbackSubmitted) return; // prevent double‑submits
+
+    // Decide which category to store based on human role
+    const category =
+      humanRole?.toLowerCase() === "operative" ? "clue" : "guess";
+
+    try {
+      // 1️⃣ Save the rating to the in‑memory game object on the server
+      await fetch(`/api/game/${game.id}/rating`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ rating, category }),
+      });
+
+      // 2️⃣ Ask the server to persist the full game to Supabase
+      await fetch(`/api/game/${game.id}/save`, { method: "POST" });
+
+      setFeedbackSubmitted(true); // hide banner
+    } catch (err) {
+      console.error("Rating / save failed:", err);
+      // You can optionally surface a toast or keep the banner for retry
+    }
   };
 
   return (
@@ -453,6 +542,26 @@ export function Game({
             {("winner" in game && game.winner)
               ? `${game.winner.charAt(0).toUpperCase()}${game.winner.slice(1)} team wins!`
               : ""}
+          </div>
+        )}
+        {isGameOver && !feedbackSubmitted && (
+          <div className="absolute top-28 left-1/2 transform -translate-x-1/2 px-6 py-4 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 text-base sm:text-lg shadow-lg z-50 w-11/12 sm:w-auto">
+            <p className="mb-3 font-semibold text-center">
+              {humanRole?.toLowerCase() === "operative"
+                ? "How did you like the AI clues?"
+                : "How did you like the AI guesses?"}
+            </p>
+            <div className="flex justify-center gap-2">
+              {[1, 2, 3, 4, 5].map((n) => (
+                <button
+                  key={n}
+                  onClick={() => submitRating(n)}
+                  className="w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center rounded-full border border-gray-400 dark:border-gray-600 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+                >
+                  {n}
+                </button>
+              ))}
+            </div>
           </div>
         )}
         {turnPassed && (
@@ -577,7 +686,7 @@ export function Game({
               <div className="absolute inset-0 bg-white/60 dark:bg-gray-900/60 flex flex-col items-center justify-center z-50 pointer-events-none">
                 <LoadingSpinner />
                 <span className="mt-4 text-gray-800 dark:text-gray-200 font-semibold">
-                  AI operative is thinking…
+                  thinking…
                 </span>
               </div>
             )}
@@ -591,7 +700,7 @@ export function Game({
                   className={`
                     relative h-24 md:text-lg font-semibold border-2 transition-all duration-200
                     ${getCardStyle(card, !!card.revealed)}
-                    ${!card.revealed ? "hover:scale-105 cursor-pointer" : "cursor-default"}
+                    ${!card.revealed ? "hover:scale-105 hover:bg-gray-200 cursor-pointer" : "cursor-default"}
                     ${isRevealed && aiRevealedCards[realIndex] ? " ring-4 ring-yellow-300" : ""}
                   `}
                   disabled={card.revealed || game.phase !== "guessing" || showSpinner}
@@ -606,7 +715,19 @@ export function Game({
               );
             })}
           </div>
-          
+          {game.phase === "guessing" &&
+            !showSpinner &&
+            (currentOperative?.agent ?? "").trim().toLowerCase() === "human" &&
+            game.guessesRemaining === 1 && (
+              <div className="flex justify-center mb-6">
+                <Button
+                  onClick={handleEndTurn}
+                  className="px-4 py-2 bg-gray-300 hover:bg-gray-400 text-gray-800 rounded"
+                >
+                  End Turn
+                </Button>
+              </div>
+          )}
         </div>
         {/* Clue submission UI, directly after the game cards */}
         {(showHumanInfo || isHumanSpymasterTurn) && (
