@@ -57,6 +57,7 @@ export function Game({
   const currentOperative = game.teams[game.currentTeam].players.find(
     (p) => p.role === "operative"
   );
+  const [waitingPass, setWaitingPass] = useState(false);
   /**
    * Show team colours only if **this viewer** is playing the spymaster role.
    * If the viewer is an operative (human), keep cards neutral until revealed.
@@ -365,9 +366,16 @@ export function Game({
   const isAISpymaster  = spymaster?.agent?.trim().toLowerCase() === "ai";
   const isAIOperative  = currentOperative?.agent?.trim().toLowerCase() === "ai";
 
-  const showSpinner =
+  const showSpinner = waitingPass ||
     (isAISpymaster && (forceSpinner || awaitingClue)) ||
     (isAIOperative && spinnerActive);
+
+  // Show “End Turn” only when the team is on its bonus (+1) guess
+const canEndTurn =
+  game.phase === "guessing" &&
+  !showSpinner &&
+  (currentOperative?.agent ?? "").trim().toLowerCase() === "human" &&
+  game.guessesRemaining === 1;
 
 
   const handleCardClick = async (cardIndex: number) => {
@@ -412,6 +420,7 @@ export function Game({
 const handleEndTurn = async () => {
   // Only the operative can end the turn while it's still guessing and no AI spinner is active
   if (game.phase !== "guessing" || showSpinner) return;
+  setWaitingPass(true)
 
   try {
     const res = await fetch(`/api/game/${game.id}/pass`, {
@@ -434,7 +443,7 @@ const handleEndTurn = async () => {
     }
   } catch (err) {
     console.error("End turn failed:", err);
-  }
+  } finally {setWaitingPass(false)}
 };
 
   
@@ -619,6 +628,14 @@ const handleEndTurn = async () => {
               </span>
             </div>
           )}
+          {canEndTurn && (
+  <Button
+    onClick={handleEndTurn}
+    className="px-3 py-1.5 bg-gray-300 hover:bg-gray-400 text-gray-800 rounded"
+  >
+    End Turn
+  </Button>
+)}
         </div>
 
         {/* Team Roles and Scores + Game Board Layout */}
@@ -675,7 +692,16 @@ const handleEndTurn = async () => {
                 }`}>
                   {game.clue.number}
                 </span>
+                {canEndTurn && (
+  <Button
+    onClick={handleEndTurn}
+    className="px-2 py-1 bg-gray-300 hover:bg-gray-400 text-gray-800 rounded text-sm"
+  >
+    End Turn
+  </Button>
+)}
               </div>
+              
             )}
           </div>
 
@@ -714,19 +740,6 @@ const handleEndTurn = async () => {
               );
             })}
           </div>
-          {game.phase === "guessing" &&
-            !showSpinner &&
-            (currentOperative?.agent ?? "").trim().toLowerCase() === "human" &&
-            game.guessesRemaining === 1 && (
-              <div className="flex justify-center mb-6">
-                <Button
-                  onClick={handleEndTurn}
-                  className="px-4 py-2 bg-gray-300 hover:bg-gray-400 text-gray-800 rounded"
-                >
-                  End Turn
-                </Button>
-              </div>
-          )}
         </div>
         {/* Clue submission UI, directly after the game cards */}
         {(showHumanInfo || isHumanSpymasterTurn) && (
