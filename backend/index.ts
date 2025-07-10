@@ -9,7 +9,9 @@ const port = process.env.PORT || 3000;
 
 app.use(express.json());
 
-const publicPath = path.resolve(__dirname, "../public");
+const publicPath = process.env.PUBLIC_DIR
+  ? path.resolve(__dirname, "..", process.env.PUBLIC_DIR)
+  : path.resolve(__dirname, "../public");
 console.log("Resolved publicPath:", publicPath);
 
 app.use(express.static(publicPath));

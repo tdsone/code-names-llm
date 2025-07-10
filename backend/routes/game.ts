@@ -63,7 +63,8 @@ router.post("/", async (req: Request, res: Response) => {
        Example: choose “Zephyr” instead of “Wind”.
     4. Avoid proper nouns, acronyms, offensive terms, or multi‑word phrases. There can't be more than one word with the same root.
     5. Balance syllable length – include short and long words.
-    6. Output **RAW JSON ONLY** (no Markdown, no commentary). If you output any extra text or not exactly 25 cards, respond with an error instead.
+    6.  Do not use thr word "venom".
+    7. Output **RAW JSON ONLY** (no Markdown, no commentary). If you output any extra text or not exactly 25 cards, respond with an error instead.
 
     ### Perfect output example (structure only, counts differ):
 

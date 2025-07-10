@@ -146,12 +146,23 @@ export function Game({
     }
   }, [guessResult]);
 
+
   // Auto-dismiss the "assassin" banner after 5 seconds
   useEffect(() => {
     if (guessResult === "assassin") {
       const timer = setTimeout(() => {
         setGuessResult(null);
       }, 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [guessResult]);
+
+  // Auto-dismiss the "right" banner after 0.8 s
+  useEffect(() => {
+    if (guessResult === "right") {
+      const timer = setTimeout(() => {
+        setGuessResult(null);     // hide "Correct!" banner
+      }, 800);
       return () => clearTimeout(timer);
     }
   }, [guessResult]);
@@ -180,7 +191,12 @@ export function Game({
       setPreviousCards(game.cards);
       return;
     }
-    if (guessResult || turnPassed) {
+
+    // Only block further processing if guessResult is "wrong" or "assassin", or turnPassed
+    const isBlockingBanner =
+      guessResult === "wrong" || guessResult === "assassin" || turnPassed;
+
+    if (isBlockingBanner) {
       setPreviousCards(game.cards);
       return;
     }
@@ -369,6 +385,8 @@ export function Game({
   const showSpinner = waitingPass ||
     (isAISpymaster && (forceSpinner || awaitingClue)) ||
     (isAIOperative && spinnerActive);
+  // Hide the team‑and‑phase banner whenever the spinner overlay is visible
+  const showPhaseInfo = !showSpinner;
 
   // Show “End Turn” only when the team is on its bonus (+1) guess
 const canEndTurn =
@@ -605,10 +623,12 @@ const handleEndTurn = async () => {
 
         {/* Large screen Turn Info above board */}
         <div className="hidden lg:flex justify-center items-center gap-6 w-full text-lg font-semibold text-gray-700 dark:text-gray-300 mb-4">
-          <span>
-            {getCurrentTeamDisplay()} {phaseMessage}
-            {showSpinner && <LoadingSpinner />}
-          </span>
+          {showPhaseInfo && (
+            <span>
+              {getCurrentTeamDisplay()} {phaseMessage}
+              {showSpinner && <LoadingSpinner />}
+            </span>
+          )}
           {!hideClue && game.clue && game.phase === "guessing" && (
             <div className={`flex items-center gap-3 px-4 py-2 rounded-lg shadow-sm border
               ${game.currentTeam === "red"
@@ -647,7 +667,7 @@ const handleEndTurn = async () => {
               <div className={`${game.currentTeam === "red" ? "text-white" : "text-[#F05F45] dark:text-[#F05F45]"} font-semibold mb-1`}>Red</div>
               {game.teams.red.players.map((player) => (
                 <div key={player.id} className={`text-sm mb-1 ${game.currentTeam === "red" ? "text-white font-semibold" : "text-[#F05F45] dark:text-[#F05F45]"}`}>
-                  {player.role.charAt(0).toUpperCase() + player.role.slice(1)}: {player.agent === "ai" ? "AI" : `🫵 ${player.name}`}
+                  {player.role.charAt(0).toUpperCase() + player.role.slice(1)}: {player.agent === "ai" ? "AI" : `${player.name}`}
                 </div>
               ))}
               <div className={`text-sm ${game.currentTeam === "red" ? "text-white font-semibold" : "text-[#F05F45] dark:text-[#F05F45]"}`}>
@@ -660,7 +680,7 @@ const handleEndTurn = async () => {
               <div className={`${game.currentTeam === "blue" ? "text-white font-bold" : "text-[#6294D8] dark:text-[#6294D8]"} font-semibold mb-1`}>Blue</div>
               {game.teams.blue.players.map((player) => (
                 <div key={player.id} className={`text-sm mb-1 ${game.currentTeam === "blue" ? "text-white font-semibold" : "text-[#6294D8] dark:text-[#6294D8]"}`}>
-                  {player.role.charAt(0).toUpperCase() + player.role.slice(1)}: {player.agent === "ai" ? "AI" : `🫵 ${player.name}`}
+                  {player.role.charAt(0).toUpperCase() + player.role.slice(1)}: {player.agent === "ai" ? "AI" : `${player.name}`}
                 </div>
               ))}
               <div className={`text-sm ${game.currentTeam === "blue" ? "text-white font-semibold" : "text-[#6294D8] dark:text-[#6294D8]"}`}>
@@ -671,10 +691,12 @@ const handleEndTurn = async () => {
 
           {/* Center: Turn Info and Clue (only for small screens) */}
           <div className="flex justify-center items-center gap-6 lg:hidden w-full text-lg font-semibold text-gray-700 dark:text-gray-300 text-sm">
-            <span>
-              {getCurrentTeamDisplay()} {phaseMessage}
-              {showSpinner && <LoadingSpinner />}
-            </span>
+            {showPhaseInfo && (
+              <span>
+                {getCurrentTeamDisplay()} {phaseMessage}
+                {showSpinner && <LoadingSpinner />}
+              </span>
+            )}
             {!hideClue && game.clue && game.phase === "guessing" && (
               <div className={`flex items-center gap-3 px-4 py-2 rounded-lg shadow-sm border
                 ${game.currentTeam === "red"
@@ -708,11 +730,8 @@ const handleEndTurn = async () => {
           {/* Game Board */}
           <div className="relative lg:w-4/5 w-full grid grid-cols-5 gap-4 mb-8">
             {showSpinner && (
-              <div className="absolute inset-0 bg-white/60 dark:bg-gray-900/60 flex flex-col items-center justify-center z-50 pointer-events-none">
+              <div className="absolute inset-0 bg-white/60 dark:bg-gray-900/60 flex items-center justify-center z-50 pointer-events-none">
                 <LoadingSpinner />
-                <span className="mt-4 text-gray-800 dark:text-gray-200 font-semibold">
-                  thinking…
-                </span>
               </div>
             )}
             {shuffledIndices.map((realIndex) => {
@@ -736,7 +755,7 @@ const handleEndTurn = async () => {
                       AI
                     </span>
                   )}
-                </Button>
+                </Button> 
               );
             })}
           </div>
