@@ -611,6 +611,16 @@ const handleEndTurn = async () => {
             >
               About
             </Button>
+            <a
+              href="https://coff.ee/juliakzl"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <Button className="mx-2" variant="ghost">
+                <span className="hidden sm:inline">Buy&nbsp;me&nbsp;a&nbsp;coffee</span>
+                <span className="sm:hidden">☕</span>
+              </Button>
+            </a>
             <Button
               className="px-3 sm:px-4 py-1 bg-[#6294D8] hover:bg-[#4f7bc2] text-white rounded transition-colors focus:outline-none focus:ring-2 focus:ring-[#6294D8] focus:ring-offset-2 font-semibold text-sm sm:text-base"
               onClick={handleStartNewGame}
