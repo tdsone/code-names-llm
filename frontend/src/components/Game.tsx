@@ -17,7 +17,7 @@ export function LoadingSpinner() {
     <img
       src={search}
       alt="Loading"
-      className="animate-spin h-5 w-5 inline-block ml-2"
+      className="animate-spin h-8 w-8 inline-block ml-2"
     />
   );
 }
@@ -346,6 +346,15 @@ export function Game({
     (c) => c.type === "assassin" && c.revealed
   );
   const isGameOver = game.phase === "finished" || assassinRevealed;
+  // Controls visibility of the "Game Over!" banner
+  const [showGameOverBanner, setShowGameOverBanner] = useState(false);
+  // Show the Game‑Over banner for 10 s, then hide it
+  useEffect(() => {
+    if (!isGameOver) return;
+    setShowGameOverBanner(true);
+    const t = setTimeout(() => setShowGameOverBanner(false), 10000);
+    return () => clearTimeout(t);
+  }, [isGameOver]);
   // Adjust this if your backend exposes a different property
   const aiClueWords: string[] = (game as any).aiClueWords ?? [];
 
@@ -502,7 +511,7 @@ const handleEndTurn = async () => {
 
   return (
     <div className="min-h-screen w-full bg-gradient-to-b from-[#F05F4533] to-[#6294D833] dark:from-gray-900 dark:to-gray-800
-           px-2 sm:px-4 pt-0 sm:pt-4 pb-4 sm:mt-4">
+           px-4 sm:px-6 pt-0 sm:pt-4 pb-32 sm:pb-40 sm:mt-4">
       {showRulesModal && (
         <div
           className="fixed inset-0 bg-transparent flex items-start justify-center z-50 overflow-y-auto"
@@ -562,7 +571,7 @@ const handleEndTurn = async () => {
               : "Wrong!"}
           </div>
         )}
-        {isGameOver && !guessResult && (
+        {showGameOverBanner && !guessResult && (
           <div className="absolute top-10 left-1/2 transform -translate-x-1/2 px-6 py-2 rounded bg-black text-white text-xl font-bold shadow-md z-50 transition-opacity duration-500">
             Game Over!{" "}
             {("winner" in game && game.winner)
@@ -588,6 +597,17 @@ const handleEndTurn = async () => {
                 </button>
               ))}
             </div>
+            <div className="flex justify-center mt-4">
+              <a
+                href="https://coff.ee/juliakzl"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-1 text-[#F05F45] dark:text-[#F05F45] font-semibold hover:underline"
+              >
+                <span className="hidden sm:inline">Buy&nbsp;me&nbsp;a&nbsp;coffee</span>
+                <span className="sm:hidden">Cover your game costs 💸</span>
+              </a>
+            </div>
           </div>
         )}
         {turnPassed && (
@@ -596,16 +616,15 @@ const handleEndTurn = async () => {
           </div>
         )}
         {/* Game Header */}
-        <header className="w-full flex flex-nowrap items-center py-4 px-4 sm:px-6 bg-white dark:bg-gray-900 shadow-md mb-6 rounded-lg mt-2">
-          <div className="flex items-center space-x-4 mt-2">
-            <img src={Clu3Logo} alt="Clu3 Logo" className="lg:h-10 w-auto h-4 flex-shrink-0 mr-4" />
+        <header className="w-full flex items-center justify-between py-3 px-2 sm:px-4 bg-white dark:bg-gray-900 shadow-md mb-6 rounded-lg mt-2">
+          <div className="flex items-center">
+            <img src={Clu3Logo} alt="Clu3 Logo" className="lg:h-10 w-auto h-4 flex-shrink-0 mr-2" />
           </div>
-          <div className="flex gap-2 sm:gap-4 ml-auto">
-            <Button className="mx-2" variant="ghost" onClick={() => setShowRulesModal(true)}>
+          <div className="flex items-center gap-2 sm:gap-3">
+            <Button variant="ghost" onClick={() => setShowRulesModal(true)}>
               Rules
             </Button>
             <Button
-              className="mx-2"
               variant="ghost"
               onClick={() => setShowAboutModal(true)}
             >
@@ -616,13 +635,13 @@ const handleEndTurn = async () => {
               target="_blank"
               rel="noopener noreferrer"
             >
-              <Button className="mx-2" variant="ghost">
-                <span className="hidden sm:inline">Buy&nbsp;me&nbsp;a&nbsp;coffee</span>
+              <Button variant="ghost">
+                <span className="hidden sm:inline">Cover&nbsp;your&nbsp;openAI&nbsp;costs</span>
                 <span className="sm:hidden">☕</span>
               </Button>
             </a>
             <Button
-              className="px-3 sm:px-4 py-1 bg-[#6294D8] hover:bg-[#4f7bc2] text-white rounded transition-colors focus:outline-none focus:ring-2 focus:ring-[#6294D8] focus:ring-offset-2 font-semibold text-sm sm:text-base"
+              className="px-2 sm:px-4 py-1 bg-[#6294D8] hover:bg-[#4f7bc2] text-white rounded transition-colors focus:outline-none focus:ring-2 focus:ring-[#6294D8] focus:ring-offset-2 font-semibold text-sm sm:text-base"
               onClick={handleStartNewGame}
             >
               <span className="sm:hidden">New&nbsp;Game</span>
@@ -738,7 +757,7 @@ const handleEndTurn = async () => {
           </div>
 
           {/* Game Board */}
-          <div className="relative lg:w-4/5 w-full grid grid-cols-5 gap-4 mb-8">
+          <div className="relative lg:w-4/5 w-full grid grid-cols-5 gap-4 mb-1">
             {showSpinner && (
               <div className="absolute inset-0 bg-white/60 dark:bg-gray-900/60 flex items-center justify-center z-50 pointer-events-none">
                 <LoadingSpinner />
@@ -760,11 +779,6 @@ const handleEndTurn = async () => {
                   disabled={card.revealed || game.phase !== "guessing" || showSpinner}
                 >
                   <span>{card.word}</span>
-                  {isRevealed && aiRevealedCards[realIndex] && (
-                    <span className="absolute top-0 left-0 m-1 px-1.5 rounded bg-yellow-400 text-[10px] font-bold text-gray-900">
-                      AI
-                    </span>
-                  )}
                 </Button> 
               );
             })}
@@ -785,7 +799,7 @@ const handleEndTurn = async () => {
         )}
 
         {/* Game Stats */}
-        <div className="flex justify-center space-x-8 text-center">
+        <div className="flex flex-row flex-nowrap items-center justify-center gap-2 sm:gap-4 text-center w-full pt-1 px-2 mb-24 overflow-x-auto">
           <div className="bg-[#F05F45]/10 dark:bg-[#F05F45]/30 px-4 py-2 rounded-lg">
             <div className="text-[#F05F45] dark:text-[#F05F45] font-semibold">
               Red Team
@@ -814,8 +828,8 @@ const handleEndTurn = async () => {
           </div>
         </div>
 
-        {/* Reveal AI clues button + modal (visible only after game ends) */}
-        {isGameOver && (
+        {/* Reveal AI clues button + modal (visible only after game ends, and only for operative) */}
+        {isGameOver && humanRole?.toLowerCase() === "operative" && (
           <>
             <div className="flex justify-center mt-6">
               <button
