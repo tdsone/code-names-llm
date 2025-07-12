@@ -590,7 +590,7 @@ const handleEndTurn = async () => {
                 rel="noopener noreferrer"
                 className="flex items-center gap-1 text-[#F05F45] dark:text-[#F05F45] font-semibold hover:underline"
               >
-                <span className="hidden sm:inline">Cover&nbsp;your&nbsp;game&nbsp;costs&nbsp;💸</span>
+                <span className="hidden sm:inline">Cover&nbsp;my&nbsp;game&nbsp;costs&nbsp;💸</span>
                 <span className="sm:hidden">Cover your game costs 💸</span>
               </a>
             </div>
@@ -737,42 +737,44 @@ const handleEndTurn = async () => {
             )}
           </div>
 
-        {/* Status banners ‑ appear directly above the board */}
-        {guessResult && (
-          <div className={`mx-auto mb-3 px-6 py-2 rounded text-white text-xl font-bold shadow-md w-max ${
-            guessResult === "right"
-              ? "bg-green-600"
-              : guessResult === "assassin"
-                ? "bg-black"
-                : "bg-red-600"
-          }`}>
-            {lastGuessWord && (
-              <>
-                AI guessed "<span className="underline">{lastGuessWord}</span>" —{" "}
-              </>
-            )}
-            {guessResult === "right"
-              ? "Correct!"
-              : guessResult === "assassin"
-              ? "Assassin Card – Game Over"
-              : "Wrong!"}
-          </div>
-        )}
-        {showGameOverBanner && !guessResult && (
-          <div className="mx-auto mt-6 sm:mt-3 mb-3 px-6 py-2 rounded bg-black text-white text-xl font-bold shadow-md w-max">
-            Game Over!{" "}
-            {("winner" in game && game.winner)
-              ? `${game.winner.charAt(0).toUpperCase()}${game.winner.slice(1)} team wins!`
-              : ""}
-          </div>
-        )}
-        {turnPassed && (
-          <div className="mx-auto mb-3 px-6 py-3 rounded-lg bg-yellow-500 text-white text-lg font-semibold shadow-lg w-max">
-            Turn passed to the other team
-          </div>
-        )}
-        {/* Game Board */}
-          <div className="relative lg:w-4/5 w-full grid grid-cols-5 gap-4 mb-1">
+        {/* Board column: banners + game board */}
+        <div className="flex flex-col items-center lg:w-4/5 w-full">
+          {guessResult && (
+            <div className={`mb-3 px-6 py-2 rounded text-white text-xl font-bold shadow-md w-max ${
+              guessResult === "right"
+                ? "bg-green-600"
+                : guessResult === "assassin"
+                  ? "bg-black"
+                  : "bg-red-600"
+            }`}>
+              {lastGuessWord && (
+                <>
+                  AI guessed "<span className="underline">{lastGuessWord}</span>" —{" "}
+                </>
+              )}
+              {guessResult === "right"
+                ? "Correct!"
+                : guessResult === "assassin"
+                ? "Assassin Card – Game Over"
+                : "Wrong!"}
+            </div>
+          )}
+          {showGameOverBanner && !guessResult && (
+            <div className="mt-6 sm:mt-3 mb-3 px-6 py-2 rounded bg-black text-white text-xl font-bold shadow-md w-max">
+              Game Over!{" "}
+              {("winner" in game && game.winner)
+                ? `${game.winner.charAt(0).toUpperCase()}${game.winner.slice(1)} team wins!`
+                : ""}
+            </div>
+          )}
+          {turnPassed && (
+            <div className="mb-3 px-6 py-3 rounded-lg bg-yellow-500 text-white text-lg font-semibold shadow-lg w-max">
+              Turn passed to the other team
+            </div>
+          )}
+
+          {/* Game Board */}
+          <div className="relative w-full grid grid-cols-5 gap-4 mb-1">
             {showSpinner && (
               <div className="absolute inset-0 bg-white/60 dark:bg-gray-900/60 flex items-center justify-center z-50 pointer-events-none">
                 <LoadingSpinner />
@@ -798,6 +800,7 @@ const handleEndTurn = async () => {
               );
             })}
           </div>
+        </div>
         </div>
         {/* Clue submission UI, directly after the game cards */}
         {(showHumanInfo || isHumanSpymasterTurn) && (
