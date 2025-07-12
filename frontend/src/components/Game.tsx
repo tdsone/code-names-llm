@@ -127,22 +127,19 @@ export function Game({
   // Track which revealed card index we have already processed this turn
   const [lastRevealedIndex, setLastRevealedIndex] = useState<number | null>(null);
 
-  // When a wrong guess happens, show the banner for 1 s, then
-  // 1) hide it and 2) show the "turn passed" banner.
+  // When a wrong guess happens, immediately pass the turn and show spinner if AI
   useEffect(() => {
     if (guessResult === "wrong") {
-      setHideClue(true); // hide clue while waiting for new one
-      const timer = setTimeout(() => {
-        setGuessResult(null);      // hide "Wrong Guess!" banner
-        setTurnPassed(true);       // now show "Turn passed" banner
-        // If next spymaster is AI, force the spinner to show
-        const nextTeam = previousTeam === "red" ? "blue" : "red";
-        const nextSpymaster = game.teams[nextTeam].players.find((p) => p.role === "spymaster");
-        if (nextSpymaster?.agent === "ai") {
-          setForceSpinner(true);
-        }
-      }, 1000);
-      return () => clearTimeout(timer);
+      setHideClue(true); // hide clue immediately
+      setGuessResult(null); // hide "Wrong!" banner
+      setTurnPassed(true); // show "Turn passed" banner
+      // If next spymaster is AI, force the spinner to show
+      const nextTeam = previousTeam === "red" ? "blue" : "red";
+      const nextSpymaster = game.teams[nextTeam].players.find((p) => p.role === "spymaster");
+      if (nextSpymaster?.agent === "ai") {
+        setForceSpinner(true);
+      }
+      // Clue fetch is handled by the phase change effect
     }
   }, [guessResult]);
 
@@ -445,8 +442,8 @@ const canEndTurn =
 };
 
 const handleEndTurn = async () => {
-  // Only the operative can end the turn while it's still guessing and no AI spinner is active
-  if (game.phase !== "guessing" || showSpinner) return;
+  // Turn passing is always permitted via automatic handler
+  if (showSpinner) return;
   setWaitingPass(true)
 
   try {
@@ -591,7 +588,7 @@ const handleEndTurn = async () => {
                 className="flex items-center gap-1 text-[#F05F45] dark:text-[#F05F45] font-semibold hover:underline"
               >
                 <span className="hidden sm:inline">Cover&nbsp;my&nbsp;game&nbsp;costs&nbsp;💸</span>
-                <span className="sm:hidden">Cover your game costs 💸</span>
+                <span className="sm:hidden">Cover my game costs 💸</span>
               </a>
             </div>
           </div>

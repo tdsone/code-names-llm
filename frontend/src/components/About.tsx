@@ -16,10 +16,10 @@ export function About() {
         <p className="list-disc pl-5 space-y-1">
           How did you enjoy the game? Did you feel you understood the clues the AI gave you? Do you now have a clearer sense of its reasoning? I&rsquo;d love to hear your thoughts and feedback:&nbsp;
           <a
-            href="mailto:kozlovskaiajulia@gmail.com"
+            href="mailto:clu3@juliakzl.com"
             className="underline"
           >
-            kozlovskaiajulia@gmail.com
+            clu3@juliakzl.com
           </a>
         </p>
       </section>
