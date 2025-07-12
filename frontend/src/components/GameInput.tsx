@@ -74,14 +74,30 @@ export default function GameSetup({ onPlayersSubmit, onClose }: { onPlayersSubmi
               onChange={(e) => setRed({ ...red, name: e.target.value })}
               required
             />
-            <select
-              className="w-full p-2 border rounded mt-2"
-              value={red.role}
-              onChange={(e) => setRed({ ...red, role: e.target.value as Player['role'] })}
-            >
-              <option value="operative">🔍 Operative</option>
-              <option value="spymaster">🃏 Spymaster</option>
-            </select>
+            <div className="flex gap-2 mt-2">
+              <button
+                type="button"
+                onClick={() => setRed({ ...red, role: 'operative' })}
+                className={`flex-1 px-2 py-1 rounded border transition ${
+                  red.role === 'operative'
+                    ? 'bg-white text-[#F05F45] font-semibold'
+                    : 'bg-transparent text-white border-white/40 hover:bg-white/20'
+                }`}
+              >
+                🔍 Operative
+              </button>
+              <button
+                type="button"
+                onClick={() => setRed({ ...red, role: 'spymaster' })}
+                className={`flex-1 px-2 py-1 rounded border transition ${
+                  red.role === 'spymaster'
+                    ? 'bg-white text-[#F05F45] font-semibold'
+                    : 'bg-transparent text-white border-white/40 hover:bg-white/20'
+                }`}
+              >
+                🃏 Spymaster
+              </button>
+            </div>
           </div>
 
           <div className="bg-[#6294D899] p-4 rounded text-white">
@@ -93,14 +109,30 @@ export default function GameSetup({ onPlayersSubmit, onClose }: { onPlayersSubmi
               onChange={(e) => setBlue({ ...blue, name: e.target.value })}
               required
             />
-            <select
-              className="w-full p-2 border rounded mt-2"
-              value={blue.role}
-              onChange={(e) => setBlue({ ...blue, role: e.target.value as Player['role'] })}
-            >
-              <option value="operative">🔍 Operative</option>
-              <option value="spymaster">🃏 Spymaster</option>
-            </select>
+            <div className="flex gap-2 mt-2">
+              <button
+                type="button"
+                onClick={() => setBlue({ ...blue, role: 'operative' })}
+                className={`flex-1 px-2 py-1 rounded border transition ${
+                  blue.role === 'operative'
+                    ? 'bg-white text-[#6294D8] font-semibold'
+                    : 'bg-transparent text-white border-white/40 hover:bg-white/20'
+                }`}
+              >
+                🔍 Operative
+              </button>
+              <button
+                type="button"
+                onClick={() => setBlue({ ...blue, role: 'spymaster' })}
+                className={`flex-1 px-2 py-1 rounded border transition ${
+                  blue.role === 'spymaster'
+                    ? 'bg-white text-[#6294D8] font-semibold'
+                    : 'bg-transparent text-white border-white/40 hover:bg-white/20'
+                }`}
+              >
+                🃏 Spymaster
+              </button>
+            </div>
           </div>
 
           <div className="flex justify-end">
