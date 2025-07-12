@@ -6,7 +6,7 @@ import { Rules } from "./Rules";
 import { About } from "./About"
 
 
-import search from '../assets/search.svg'
+import search from '../assets/search-red.svg'
 import Clu3Logo from '../assets/Clu3.svg';
 
 import { Dialog, Transition } from "@headlessui/react";
@@ -554,7 +554,7 @@ const handleEndTurn = async () => {
       )}
       <div className="max-w-6xl mx-auto">
         {guessResult && (
-          <div className={`absolute top-10 left-1/2 transform -translate-x-1/2 px-6 py-2 rounded text-white text-xl font-bold shadow-md z-50 transition-opacity duration-500 ${guessResult === "right"
+          <div className={`absolute top-24 sm:top-10 left-1/2 transform -translate-x-1/2 px-6 py-2 rounded text-white text-xl font-bold shadow-md z-50 transition-opacity duration-500 ${guessResult === "right"
             ? "bg-green-600"
             : guessResult === "assassin"
               ? "bg-black"
@@ -572,7 +572,7 @@ const handleEndTurn = async () => {
           </div>
         )}
         {showGameOverBanner && !guessResult && (
-          <div className="absolute top-10 left-1/2 transform -translate-x-1/2 px-6 py-2 rounded bg-black text-white text-xl font-bold shadow-md z-50 transition-opacity duration-500">
+          <div className="absolute top-24 sm:top-10 left-1/2 transform -translate-x-1/2 px-6 py-2 rounded bg-black text-white text-xl font-bold shadow-md z-50 transition-opacity duration-500">
             Game Over!{" "}
             {("winner" in game && game.winner)
               ? `${game.winner.charAt(0).toUpperCase()}${game.winner.slice(1)} team wins!`
@@ -597,21 +597,33 @@ const handleEndTurn = async () => {
                 </button>
               ))}
             </div>
-            <div className="flex justify-center mt-4">
+            {/* Reveal clues button – visible only to human operatives */}
+            {humanRole?.toLowerCase() === "operative" && (
+              <div className="flex justify-center mt-4">
+                <button
+                  type="button"
+                  onClick={() => setIsClueModalOpen(true)}
+                  className="rounded bg-[#F05F45] px-4 py-2 text-white hover:bg-[#F05F45] focus:outline-none focus:ring-2 focus:ring-[#F05F45]"
+                >
+                  Reveal AI clues
+                </button>
+              </div>
+            )}
+            <div className="flex justify-center mt-2">
               <a
                 href="https://coff.ee/juliakzl"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center gap-1 text-[#F05F45] dark:text-[#F05F45] font-semibold hover:underline"
               >
-                <span className="hidden sm:inline">Buy&nbsp;me&nbsp;a&nbsp;coffee</span>
+                <span className="hidden sm:inline">Cover&nbsp;your&nbsp;game&nbsp;costs&nbsp;💸</span>
                 <span className="sm:hidden">Cover your game costs 💸</span>
               </a>
             </div>
           </div>
         )}
         {turnPassed && (
-          <div className="absolute top-20 left-1/2 transform -translate-x-1/2 px-6 py-3 rounded-lg bg-yellow-500 text-white text-lg font-semibold shadow-lg z-50">
+          <div className="absolute top-32 sm:top-20 left-1/2 transform -translate-x-1/2 px-6 py-3 rounded-lg bg-yellow-500 text-white text-lg font-semibold shadow-lg z-50">
             Turn passed to the other team
           </div>
         )}
@@ -828,19 +840,9 @@ const handleEndTurn = async () => {
           </div>
         </div>
 
-        {/* Reveal AI clues button + modal (visible only after game ends, and only for operative) */}
+        {/* Reveal AI clues modal (visible only after game ends, and only for operative) */}
         {isGameOver && humanRole?.toLowerCase() === "operative" && (
           <>
-            <div className="flex justify-center mt-6">
-              <button
-                type="button"
-                onClick={() => setIsClueModalOpen(true)}
-                className="rounded bg-[#F05F45] px-4 py-2 text-white hover:bg-[#F05F45] focus:outline-none focus:ring-2 focus:ring-[#F05F45]"
-              >
-                Reveal AI clues
-              </button>
-            </div>
-
             <Transition appear show={isClueModalOpen} as={Fragment}>
               <Dialog
                 as="div"
@@ -894,6 +896,8 @@ const handleEndTurn = async () => {
             </Transition>
           </>
         )}
+        {/* Remove stray bottom-page "Reveal AI clues" button */}
+        {/* (Button removed as per instructions) */}
       </div>
     </div>
   );
