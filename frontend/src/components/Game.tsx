@@ -553,32 +553,6 @@ const handleEndTurn = async () => {
         </div>
       )}
       <div className="max-w-6xl mx-auto">
-        {guessResult && (
-          <div className={`absolute top-24 sm:top-10 left-1/2 transform -translate-x-1/2 px-6 py-2 rounded text-white text-xl font-bold shadow-md z-50 transition-opacity duration-500 ${guessResult === "right"
-            ? "bg-green-600"
-            : guessResult === "assassin"
-              ? "bg-black"
-              : "bg-red-600"}`}>
-            {lastGuessWord && (
-              <>
-                AI guessed "<span className="underline">{lastGuessWord}</span>" —{" "}
-              </>
-            )}
-            {guessResult === "right"
-              ? "Correct!"
-              : guessResult === "assassin"
-              ? "Assassin Card – Game Over"
-              : "Wrong!"}
-          </div>
-        )}
-        {showGameOverBanner && !guessResult && (
-          <div className="absolute top-24 sm:top-10 left-1/2 transform -translate-x-1/2 px-6 py-2 rounded bg-black text-white text-xl font-bold shadow-md z-50 transition-opacity duration-500">
-            Game Over!{" "}
-            {("winner" in game && game.winner)
-              ? `${game.winner.charAt(0).toUpperCase()}${game.winner.slice(1)} team wins!`
-              : ""}
-          </div>
-        )}
         {isGameOver && !feedbackSubmitted && (
           <div className="absolute top-28 left-1/2 transform -translate-x-1/2 px-6 py-4 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 text-base sm:text-lg shadow-lg z-50 w-11/12 sm:w-auto">
             <p className="mb-3 font-semibold text-center">
@@ -620,11 +594,6 @@ const handleEndTurn = async () => {
                 <span className="sm:hidden">Cover your game costs 💸</span>
               </a>
             </div>
-          </div>
-        )}
-        {turnPassed && (
-          <div className="absolute top-32 sm:top-20 left-1/2 transform -translate-x-1/2 px-6 py-3 rounded-lg bg-yellow-500 text-white text-lg font-semibold shadow-lg z-50">
-            Turn passed to the other team
           </div>
         )}
         {/* Game Header */}
@@ -768,7 +737,41 @@ const handleEndTurn = async () => {
             )}
           </div>
 
-          {/* Game Board */}
+        {/* Status banners ‑ appear directly above the board */}
+        {guessResult && (
+          <div className={`mx-auto mb-3 px-6 py-2 rounded text-white text-xl font-bold shadow-md w-max ${
+            guessResult === "right"
+              ? "bg-green-600"
+              : guessResult === "assassin"
+                ? "bg-black"
+                : "bg-red-600"
+          }`}>
+            {lastGuessWord && (
+              <>
+                AI guessed "<span className="underline">{lastGuessWord}</span>" —{" "}
+              </>
+            )}
+            {guessResult === "right"
+              ? "Correct!"
+              : guessResult === "assassin"
+              ? "Assassin Card – Game Over"
+              : "Wrong!"}
+          </div>
+        )}
+        {showGameOverBanner && !guessResult && (
+          <div className="mx-auto mt-6 sm:mt-3 mb-3 px-6 py-2 rounded bg-black text-white text-xl font-bold shadow-md w-max">
+            Game Over!{" "}
+            {("winner" in game && game.winner)
+              ? `${game.winner.charAt(0).toUpperCase()}${game.winner.slice(1)} team wins!`
+              : ""}
+          </div>
+        )}
+        {turnPassed && (
+          <div className="mx-auto mb-3 px-6 py-3 rounded-lg bg-yellow-500 text-white text-lg font-semibold shadow-lg w-max">
+            Turn passed to the other team
+          </div>
+        )}
+        {/* Game Board */}
           <div className="relative lg:w-4/5 w-full grid grid-cols-5 gap-4 mb-1">
             {showSpinner && (
               <div className="absolute inset-0 bg-white/60 dark:bg-gray-900/60 flex items-center justify-center z-50 pointer-events-none">

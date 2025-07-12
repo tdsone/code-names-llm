@@ -7,6 +7,9 @@ import type {
 } from "../shared/types";
 import { applyReveal } from "./applyReveal";
 
+// Augment the Game object with a runtime-only array of used clue words
+type GameWithHistory = GameType & { usedClueWords?: string[] };
+
 
 // ▸ Which player is spymaster for the active team?
 export function getActiveSpymaster(game: GameType): PlayerType {
@@ -17,6 +20,8 @@ export function getActiveSpymaster(game: GameType): PlayerType {
 // ▸ Decide whether to call OpenAI, then mutate the game in-place
 export async function maybeGenerateClue(game: GameType): Promise<void> {
   const spymaster = getActiveSpymaster(game);
+  // Ensure we have an array tracking previously‑used clue words
+  (game as GameWithHistory).usedClueWords ??= [];
   if (spymaster.agent !== "ai") return;
 
   const clue = await generateClue(game);
@@ -92,7 +97,29 @@ const blueCount = game.currentTeam === "blue" ? 9 : 8;
     .replace(/```$/, "")
     .trim();
 
-  return JSON.parse(jsonText) as ClueType;
+  const clue = JSON.parse(jsonText) as ClueType;
+  // ─── Guarantee the clue word hasn't been used before ──────────────
+  const history = (game as GameWithHistory).usedClueWords!;
+  if (history.includes(clue.word.toLowerCase())) {
+    // Duplicate detected ─ try again (max 3 attempts to avoid infinite loops)
+    if (history.length < 30) {  // reasonable hard cap for typical game length
+      return generateClue(game);
+    }
+  } else {
+    history.push(clue.word.toLowerCase());
+  }
+  // ─── Reject clues that are identical to ANY word on the board ─────
+  const boardWords = new Set(
+    game.cards.map((c) => c.word.toLowerCase())
+  );
+  if (boardWords.has(clue.word.toLowerCase())) {
+    // Invalid clue: matches a visible word. Retry (max 5 attempts).
+    const attempts = (game as GameWithHistory).usedClueWords!.length;
+    if (attempts < 35) {            // small extra buffer over history cap
+      return generateClue(game);
+    }
+  }
+  return clue;
 }
 // ▸ When spymaster is human but operative is AI, trigger AI guesses
 export async function makeAIGuesses(game: GameType): Promise<void> {
