@@ -154,7 +154,7 @@ const human = currentGame
         <div className="space-y-4">
           <img src={Clu3} alt="clu3 logo" className="mx-auto w-48 h-auto" />
           <p className="text-xl text-[#F05F45] dark:text-gray-300 max-w-md">
-            Human intuition meets machine intelligence in the new era edition of Codenames
+            Human intuition meets machine intelligence in the new-era edition of Codenames
           </p>
         </div>
 
