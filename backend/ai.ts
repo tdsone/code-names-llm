@@ -45,22 +45,38 @@ async function generateClue(game: GameType): Promise<ClueType> {
   const blueCount = game.currentTeam === "blue" ? 9 : 8;
 
   const rulesText = `
-    You are the **SPYMASTER** for the ${team.toUpperCase()} team in the board‑game *Codenames*.
-    Follow these rules **exactly**:
+    You are the **SPYMASTER** for the ${team.toUpperCase()} team in the board‑game *Codenames*. 
+    You are teaming up with another human who has to guess N cards based on your one-word clue.
+
+
+    Example 1: 
+    - You are team red
+    - Cards: Sphinx (red), Harbor (blue), Pyramid (red), Football (neutral), Archer (assassin), Pharaoh (red)
+    - Your clue: Egypt 3
+    - Evaluation: This is a good clue because it matches as many red cards as possible (2) without 
+      risking your teammate guessing a wrong card.
+
+    Example 2: 
+    - You are team red
+    - Cards: Sphinx (red), Brezel (blue), Beer (blue), Sunshine (neutral), Football (assassin), Flag (blue), Country (blue)
+    - Your clue: Germany 4
+    - Evaluation: this is likely a bad clue because Germany is often associated with football. I.e.
+      if your teammate guesses 'Football' the game ends because Football is an assassin card.
+
+    In addition, you MUST follow these rules **exactly**:
 
     1. Return **one single English word** (no spaces, hyphens, numbers, or proper nouns).
     2. The clue **MUST** relate exclusively to your own ${team} words.
-       – It must **NOT** be connected in any way to ${otherTeam} words, neutral words, or the assassin word.
+       – It must **NOT** be associated in any way with ${otherTeam} words, neutral words, or the assassin word.
     3. If there is any doubt that a clue might point at a non‑${team} word, pick a safer, more specific clue.
-    4. Aim for a clue that links **3–4** of your words.  
-       Only use 5 if you are **certain** no off‑team words fit.
+    4. Your aim is to win the game together with your teammate. This means, you should try to suggest as many words as safely possible.
     5. Never reuse, rhyme with, translate, or otherwise reference any word visible on the board. Example: do NOT clue the word "jungle" with the clue "jungle".
     6. Output **raw JSON ONLY** (no markdown) in this exact schema:
 
-       {
-         "word": "<clue>",
-         "number": <n>,
-         "words": ["<your_word1>", "<your_word2>", ...]   // these must all be your team's words
+      {
+        "words": ["<your_word1>", "<your_word2>", ...]   // your team's words that the clue points to
+        "word": "<clue>",
+        "number": <n>,
        }
   `.trim();
 
@@ -75,7 +91,7 @@ async function generateClue(game: GameType): Promise<ClueType> {
     temperature: 0.4,
   });
   const content = response.choices[0].message.content;
-    // Ensure AI response content is present
+  // Ensure AI response content is present
   if (!content) {
     throw new Error("AI response has no content");
   }
@@ -134,7 +150,12 @@ export async function makeAIGuesses(game: GameType): Promise<void> {
   const response = await client.chat.completions.create({
     messages: [
       { role: "user", content: rulesText },
-      { role: "user", content: JSON.stringify(unrevealed.map(c => ({ word: c.word, index: c.index }))) },
+      {
+        role: "user",
+        content: JSON.stringify(
+          unrevealed.map((c) => ({ word: c.word, index: c.index }))
+        ),
+      },
     ],
     model: process.env.AZURE_OPENAI_DEPLOYMENT!,
     max_tokens: 1000,

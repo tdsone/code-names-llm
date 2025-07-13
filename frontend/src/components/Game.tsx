@@ -36,7 +36,6 @@ interface GameProps {
 
 export function Game({
   game: initialGame,
-  revealAll,
   isHumanSpymasterTurn,
   humanRole,
   showHumanInfo,
@@ -98,10 +97,6 @@ export function Game({
   }, [awaitingGuess]);
   // Stores the word the AI operative just revealed (for banner text)
   const [lastGuessWord, setLastGuessWord] = useState<string | null>(null);
-  // Keeps track of which cards were revealed by the AI operative
-  const [aiRevealedCards, setAiRevealedCards] = useState<boolean[]>(() =>
-    game.cards.map(() => false)
-  );
 
   /**
    * Wrapper around the upstream onSubmitClue handler.
@@ -207,11 +202,6 @@ export function Game({
       // If the current operative is AI, capture its guess and stop the spinner
       if ((currentOperative?.agent ?? "").trim().toLowerCase() === "ai") {
         setLastGuessWord(game.cards[newRevealedIndex].word);
-        setAiRevealedCards((prev) => {
-          const clone = [...prev];
-          clone[newRevealedIndex] = true;
-          return clone;
-        });
         setAwaitingGuess(false);
       }
       setLastRevealedIndex(newRevealedIndex);
@@ -352,6 +342,16 @@ export function Game({
     const t = setTimeout(() => setShowGameOverBanner(false), 10000);
     return () => clearTimeout(t);
   }, [isGameOver]);
+  // Immediately persist the finished game when it ends
+  useEffect(() => {
+    if (!isGameOver) return;
+    fetch(`/api/game/${game.id}/save`, { method: "POST" })
+      .then((r) => r.json())
+      .then((d) => {
+        if (!d.success) console.error("Auto-save failed:", d.message);
+      })
+      .catch((err) => console.error("Auto-save error:", err));
+  }, [isGameOver, game.id]);
   // Adjust this if your backend exposes a different property
   const aiClueWords: string[] = (game as any).aiClueWords ?? [];
 
@@ -478,8 +478,7 @@ const handleEndTurn = async () => {
   };
 
   /**
-   * Persist the user's 1‑5 rating for AI clues/guesses, then
-   * trigger the backend to save the finished game to Supabase.
+   * Persist the user's 1‑5 rating for AI clues/guesses.
    */
   const submitRating = async (rating: number) => {
     if (feedbackSubmitted) return; // prevent double‑submits
@@ -489,19 +488,15 @@ const handleEndTurn = async () => {
       humanRole?.toLowerCase() === "operative" ? "clue" : "guess";
 
     try {
-      // 1️⃣ Save the rating to the in‑memory game object on the server
+      // 1️⃣ Update the rating
       await fetch(`/api/game/${game.id}/rating`, {
-        method: "POST",
+        method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ rating, category }),
       });
-
-      // 2️⃣ Ask the server to persist the full game to Supabase
-      await fetch(`/api/game/${game.id}/save`, { method: "POST" });
-
       setFeedbackSubmitted(true); // hide banner
     } catch (err) {
-      console.error("Rating / save failed:", err);
+      console.error("Rating failed:", err);
       // You can optionally surface a toast or keep the banner for retry
     }
   };
@@ -594,7 +589,7 @@ const handleEndTurn = async () => {
           </div>
         )}
         {/* Game Header */}
-        <header className="w-full flex items-center justify-between py-3 px-2 sm:px-4 bg-white dark:bg-gray-900 shadow-md mb-6 rounded-lg mt-2">
+        <header className="w-full flex items-center justify-between py-3 px-4 sm:px-6 bg-white dark:bg-gray-900 shadow-md mb-6 rounded-lg mt-2">
           <div className="flex items-center">
             <img src={Clu3Logo} alt="Clu3 Logo" className="lg:h-10 w-auto h-4 flex-shrink-0 mr-2" />
           </div>
@@ -779,7 +774,6 @@ const handleEndTurn = async () => {
             )}
             {shuffledIndices.map((realIndex) => {
               const card = game.cards[realIndex];
-              const isRevealed = revealedCards[realIndex] || !!revealAll;
               return (
                 <Button
                   key={realIndex}
@@ -788,7 +782,6 @@ const handleEndTurn = async () => {
                     relative h-24 md:text-lg font-semibold border-2 transition-all duration-200
                     ${getCardStyle(card, !!card.revealed)}
                     ${!card.revealed ? "hover:scale-105 hover:bg-gray-200 cursor-pointer" : "cursor-default"}
-                    ${isRevealed && aiRevealedCards[realIndex] ? " ring-4 ring-yellow-300" : ""}
                   `}
                   disabled={card.revealed || game.phase !== "guessing" || showSpinner}
                 >

@@ -15,7 +15,7 @@ import { makeAIGuesses } from "../ai";
 import { applyReveal } from "../applyReveal";
 
 import { createClient } from "@supabase/supabase-js";
-import { client } from "../azure"
+import { client } from "../azure";
 
 // ─── helper: let the active team voluntarily end its guessing phase ──────────
 function passTurn(game: GameType) {
@@ -43,6 +43,41 @@ router.post("/", async (req: Request, res: Response) => {
   const redCount = startingTeam === "red" ? 9 : 8;
   const blueCount = startingTeam === "blue" ? 9 : 8;
 
+  const cardWords: string[] = [
+    "Anchor",
+    "Zephyr",
+    "Quasar",
+    "Obelisk",
+    "Mosaic",
+    "Tapestry",
+    "Compass",
+    "Lantern",
+    "Carousel",
+    "Mirage",
+    "Vortex",
+    "Catalyst",
+    "Ember",
+    "Solstice",
+    "Zenith",
+    "Paradox",
+    "Horizon",
+    "Cipher",
+    "Gallery",
+    "Obsidian",
+  ];
+
+  function getRandomWords<T>(arr: T[], count: number): T[] {
+    const copy = [...arr]; // clone so we don’t mutate original
+    const result: T[] = [];
+    for (let i = 0; i < count; i++) {
+      const idx = Math.floor(Math.random() * copy.length);
+      result.push(copy.splice(idx, 1)[0]); // remove & return one at random
+    }
+    return result;
+  }
+
+  const example = getRandomWords(cardWords, 3)
+
   try {
     const prompt = `
     Generate a JSON array of **exactly 25 unique** Codenames cards. Each card must have:
@@ -63,25 +98,23 @@ router.post("/", async (req: Request, res: Response) => {
        Example: choose “Zephyr” instead of “Wind”.
     4. Avoid proper nouns, acronyms, offensive terms, or multi‑word phrases. There can't be more than one word with the same root.
     5. Balance syllable length – include short and long words.
-    6.  Do not use thr word "venom".
+    6.  Do not use the word "venom".
     7. Output **RAW JSON ONLY** (no Markdown, no commentary). If you output any extra text or not exactly 25 cards, respond with an error instead.
 
     ### Perfect output example (structure only, counts differ):
 
     [
-      {"word": "Quasar",     "type": "red"},
-      {"word": "Zephyr",     "type": "red"},
+      {"word": "${example[0]}",     "type": "red"},
+      {"word": "${example[1]}",     "type": "red"},
       …
-      {"word": "Velvet",     "type": "assassin"}
+      {"word": "${example[2]}",     "type": "assassin"}
     ]
   `.trim();
     const response = await client.chat.completions.create({
-      messages: [
-        { role: "user", content: prompt }
-      ],
+      messages: [{ role: "user", content: prompt }],
       model: "gpt-4.1",
       max_tokens: 1000,
-      temperature: 0.7,
+      temperature: 0.9,
     });
     const rawText = response.choices[0].message.content!;
 
@@ -511,19 +544,8 @@ router.post("/:id/ai-clue", async (req, res) => {
   res.json({ success: true, game });
 });
 
-/**
- * POST /game/:id/rating
- * Body:
- *   {
- *     "rating": 3,               // integer 1‑5
- *     "category": "clue" | "guess"   // which rating we’re saving
- *   }
- *
- * The route validates input, updates the corresponding field
- * (clueRating or guessRating) on the Game object, and returns the updated game.
- */
 //@ts-ignore
-router.post("/:id/rating", (req: Request, res: Response) => {
+router.put("/:id/rating", (req: Request, res: Response) => {
   const { id } = req.params;
   const { rating, category } = req.body as {
     rating: number;
@@ -582,13 +604,6 @@ router.post("/:id/save", async (req: Request, res: Response) => {
     return res
       .status(400)
       .json({ success: false, message: "Game is not finished yet." });
-  }
-
-  if (game.clueRating === undefined && game.guessRating === undefined) {
-    return res.status(400).json({
-      success: false,
-      message: "No ratings submitted yet; nothing to save.",
-    });
   }
 
   try {
