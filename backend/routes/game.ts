@@ -114,7 +114,10 @@ router.post("/", async (req: Request, res: Response) => {
       messages: [{ role: "user", content: prompt }],
       model: "gpt-4.1",
       max_tokens: 1000,
-      temperature: 0.9,
+      temperature: 1.0,
+      top_p: 0.8,
+      frequency_penalty: 0.5,
+  presence_penalty: 0.5
     });
     const rawText = response.choices[0].message.content!;
 
