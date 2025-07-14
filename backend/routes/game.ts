@@ -549,7 +549,7 @@ router.post("/:id/ai-clue", async (req, res) => {
 });
 
 //@ts-ignore
-router.put("/:id/rating", (req: Request, res: Response) => {
+router.put("/:id/rating", async (req: Request, res: Response) => {
   const { id } = req.params;
   const { rating, category } = req.body as {
     rating: number;
@@ -580,6 +580,18 @@ router.put("/:id/rating", (req: Request, res: Response) => {
     game.clueRating = rating;
   } else {
     game.guessRating = rating;
+  }
+
+  // ── persist rating to Supabase when the game is finished ────────────────
+  try {
+    if (game.phase === "finished") {
+      await saveGameToSupabase(game);
+    }
+  } catch (err: any) {
+    console.error("Failed to save rating to Supabase:", err.message);
+    return res
+      .status(500)
+      .json({ success: false, message: "Failed to save rating to Supabase" });
   }
 
   res.json({ success: true, game });
