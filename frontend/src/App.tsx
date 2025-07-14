@@ -8,6 +8,7 @@ import { isAISpymasterTurn } from "../utils/isAISpymaster";
 import search from './assets/search.svg';
 import Clu3 from './assets/Clu3.svg'
 import { Rules } from "./components/Rules";
+import Header from "./components/Header";
 
 function LoadingSpinner() {
   return (
@@ -117,7 +118,10 @@ const human = currentGame
 
   if (currentGame) {
     return (
-      <div className="flex flex-col items-center mt-0">
+      <div className="flex flex-col w-full items-center mt-0">
+        <div className="w-full px-4 my-4">
+          <Header />
+        </div>
         <Game
           game={currentGame}
           onCardClick={handleCardClick}
@@ -149,8 +153,11 @@ const human = currentGame
   }
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center relative bg-gradient-to-b from-[#F05F4566] to-[#6294D866]">
-      <div className="text-center space-y-8 p-8">
+    <div className="min-h-screen flex flex-col w-full items-center justify-start relative bg-gradient-to-b from-[#F05F4566] to-[#6294D866]">
+      <div className="w-full px-2 my-2">
+        <Header />
+      </div>
+      <div className="text-center space-y-8 p-8 mt-40 sm:mt-40 lg:mt-48">
         <div className="space-y-4">
           <img src={Clu3} alt="clu3 logo" className="mx-auto w-48 h-auto" />
           <p className="text-xl text-[#F05F45] dark:text-gray-300 max-w-md">
