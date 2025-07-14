@@ -6,8 +6,8 @@ export function About() {
       <section>
         <h2 className="text-2xl font-semibold mb-2">Understanding Each Other</h2>
         <p className="list-disc pl-5 space-y-1">
-          What I love most about Codenames is that it lets you peek into how someone else thinks—how they connect seemingly unrelated concepts. Playing with close friends or a partner is always entertaining; you end up laughing at the creative associations their minds dream up. While a human mind is already something of a black box, an AI&rsquo;s “mind” is even more mysterious.<br />
-          Clu3 is a light‑hearted experiment to see how well AI understands human reasoning and, perhaps even more interestingly, how well humans can decipher AI reasoning.
+          What I love most about Codenames is that it lets you peek into how someone else thinks and how people you thought you know quite well connect seemingly unrelated concepts. Playing with close friends or a partner is always entertaining; you end up laughing at the not so obvious associations their minds concoct. While a human mind is already something of a black box, an AI&rsquo;s “mind” is even more mysterious.<br />
+          Clu3 is a tiny experiment of mine to see how well AI understands human reasoning and, perhaps even more interestingly, how well humans can decipher AI reasoning.
         </p>
       </section>
 
