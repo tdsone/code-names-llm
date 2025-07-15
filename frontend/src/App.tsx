@@ -5,16 +5,22 @@ import GameInput from "./components/GameInput";
 import type { Game as GameType } from "../../shared/types";
 import { useState, useEffect } from "react";
 import { isAISpymasterTurn } from "../utils/isAISpymaster";
-import search from './assets/search.svg';
-import Clu3 from './assets/Clu3.svg'
+import search from "./assets/search.svg";
+import Clu3 from "./assets/Clu3.svg";
 import { Rules } from "./components/Rules";
 import Header from "./components/Header";
 
 function LoadingSpinner() {
   return (
     <div className="flex flex-col items-center justify-center min-h-screen relative bg-gradient-to-b from-[#F05F4566] to-[#6294D866]">
-      <img src={search} alt="Loading" className="animate-spin h-12 w-12 text-indigo-600" />
-      <p className="mt-4 text-lg text-gray-700 dark:text-gray-200">Mixing up a fresh game board…</p>
+      <img
+        src={search}
+        alt="Loading"
+        className="animate-spin h-12 w-12 text-indigo-600"
+      />
+      <p className="mt-4 text-lg text-gray-700 dark:text-gray-200">
+        Mixing up a fresh game board…
+      </p>
     </div>
   );
 }
@@ -29,22 +35,27 @@ function App() {
   const [loading, setLoading] = useState(false);
   const [showGameInput, setShowGameInput] = useState(false);
 
-const human = currentGame
-  ? [
-      ...currentGame.teams.red.players.map((p) => ({ ...p, team: "red" as const })),
-      ...currentGame.teams.blue.players.map((p) => ({ ...p, team: "blue" as const })),
-    ].find(
-      (p) =>
-        p.agent === "human" &&
-        p.role === "spymaster" &&
-        p.team === currentGame.currentTeam
-    )
-  : null;
+  const human = currentGame
+    ? [
+        ...currentGame.teams.red.players.map((p) => ({
+          ...p,
+          team: "red" as const,
+        })),
+        ...currentGame.teams.blue.players.map((p) => ({
+          ...p,
+          team: "blue" as const,
+        })),
+      ].find(
+        (p) =>
+          p.agent === "human" &&
+          p.role === "spymaster" &&
+          p.team === currentGame.currentTeam
+      )
+    : null;
 
   const role = human?.role === "spymaster" ? "Spymaster" : "Operative";
   const revealAll = human?.role === "spymaster";
-  
-  
+
   const handleStartNewGame = () => {
     setShowGameInput(true);
   };
@@ -126,12 +137,14 @@ const human = currentGame
           game={currentGame}
           onCardClick={handleCardClick}
           revealAll={revealAll}
-          isHumanSpymasterTurn={!!(
-            currentGame &&
-            human?.role === "spymaster" &&
-            currentGame.phase === "waiting" &&
-            human?.team === currentGame.currentTeam
-          )}
+          isHumanSpymasterTurn={
+            !!(
+              currentGame &&
+              human?.role === "spymaster" &&
+              currentGame.phase === "waiting" &&
+              human?.team === currentGame.currentTeam
+            )
+          }
           humanRole={role}
           showHumanInfo={!!human}
           onSubmitClue={async ({ word, number }) => {
@@ -161,7 +174,8 @@ const human = currentGame
         <div className="space-y-4">
           <img src={Clu3} alt="clu3 logo" className="mx-auto w-48 h-auto" />
           <p className="text-xl text-[#F05F45] dark:text-gray-300 max-w-md">
-            Human intuition meets machine intelligence in the new-era edition of Codenames
+            Human intuition meets machine intelligence in the new-era edition of
+            Codenames
           </p>
         </div>
 
@@ -170,7 +184,7 @@ const human = currentGame
           size="lg"
           className="text-lg px-8 py-6 h-auto bg-[#6294D8] hover:bg-[#4F7FC0] text-white"
         >
-          Start New Game
+          Start two-player game
         </Button>
       </div>
 

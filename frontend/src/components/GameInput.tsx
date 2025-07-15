@@ -64,6 +64,11 @@ export default function GameSetup({ onPlayersSubmit, onClose }: { onPlayersSubmi
           ×
         </button>
         <h2 className="text-lg font-semibold mb-4 text-center">Game Setup</h2>
+        <div className="bg-yellow-100 dark:bg-yellow-900 border-l-4 border-yellow-500 dark:border-yellow-400 text-yellow-800 dark:text-yellow-200 p-4 rounded mb-4">
+          <p>
+            This version of Codenames is meant for <strong>two humans sharing this device</strong>. Each player partners with an AI teammate, so you’ll compete as two&nbsp;<em>Human&nbsp;+&nbsp;AI</em> teams.
+          </p>
+        </div>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="bg-[#F05F4599] p-4 rounded text-white">
             <h3 className="font-medium text-white pb-2">Human Red Player</h3>
