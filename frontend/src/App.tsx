@@ -130,9 +130,6 @@ function App() {
   if (currentGame) {
     return (
       <div className="flex flex-col w-full items-center mt-0">
-        <div className="w-full px-4 my-4">
-          <Header />
-        </div>
         <Game
           game={currentGame}
           onCardClick={handleCardClick}

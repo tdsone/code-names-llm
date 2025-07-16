@@ -503,7 +503,7 @@ const handleEndTurn = async () => {
 
   return (
     <div className="min-h-screen w-full bg-gradient-to-b from-[#F05F4533] to-[#6294D833] dark:from-gray-900 dark:to-gray-800
-           px-4 sm:px-6 pt-0 sm:pt-4 pb-32 sm:pb-40 sm:mt-4">
+           px-4 sm:px-6 pt-0 pb-32 sm:pb-40">
       {showRulesModal && (
         <div
           className="fixed inset-0 bg-transparent flex items-start justify-center z-50 overflow-y-auto"
