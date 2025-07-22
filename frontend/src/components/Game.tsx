@@ -612,11 +612,11 @@ const handleEndTurn = async () => {
           </div>
         )}
         {/* Game Header */}
-        <header className="w-full flex items-center justify-between py-3 px-4 sm:px-6 bg-white dark:bg-gray-900 shadow-md mb-6 rounded-lg mt-2">
+        <header className="w-full flex items-center justify-between gap-1 py-2 px-3 sm:px-6 bg-white dark:bg-gray-900 shadow-md mb-6 rounded-lg mt-2 overflow-x-auto whitespace-nowrap">
           <div className="flex items-center">
             <img src={Clu3Logo} alt="Clu3 Logo" className="lg:h-10 w-auto h-4 flex-shrink-0 mr-2" />
           </div>
-          <div className="flex items-center gap-2 sm:gap-3">
+          <div className="flex items-center gap-1 sm:gap-3 flex-shrink-0">
             <Button variant="ghost" onClick={() => setShowRulesModal(true)}>
               Rules
             </Button>
@@ -627,7 +627,8 @@ const handleEndTurn = async () => {
               About
             </Button>
             <Button variant="ghost" onClick={() => setShowStatsModal(true)}>
-              Stats
+              <span className="hidden sm:inline">Stats</span>
+              <span className="sm:hidden">📊</span>
             </Button>
             <a
               href="https://coff.ee/juliakzl"
@@ -643,7 +644,7 @@ const handleEndTurn = async () => {
               className="px-2 sm:px-4 py-1 bg-[#6294D8] hover:bg-[#4f7bc2] text-white rounded transition-colors focus:outline-none focus:ring-2 focus:ring-[#6294D8] focus:ring-offset-2 font-semibold text-sm sm:text-base"
               onClick={handleStartNewGame}
             >
-              <span className="sm:hidden">New&nbsp;Game</span>
+              <span className="sm:hidden">Play&nbsp;</span>
               <span className="hidden sm:inline">Start&nbsp;New&nbsp;Game</span>
             </Button>
           </div>
