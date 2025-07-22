@@ -321,6 +321,64 @@ router.post("/", async (req: Request, res: Response) => {
   }
 });
 
+//@ts-ignore
+router.get("/stats", async (req: Request, res: Response) => {
+  try {
+    const { data, error } = await supabase
+      .from("clu3")
+      .select("operative, spymaster, AI_clues_rating, AI_guesses_rating");
+
+    if (error) {
+      console.error("Supabase fetch error:", error.message);
+      return res
+        .status(500)
+        .json({ success: false, message: "Failed to fetch stats from Supabase" });
+    }
+
+    const totalGames = data.length;
+
+    let aiSpymaster = 0;
+    let aiOperative = 0;
+    let clueSum = 0,
+      clueCount = 0,
+      guessSum = 0,
+      guessCount = 0;
+
+    data.forEach((row) => {
+      if (row.spymaster === "ai") aiSpymaster++;
+      if (row.operative === "ai") aiOperative++;
+
+      if (row.AI_clues_rating != null) {
+        clueSum += row.AI_clues_rating;
+        clueCount++;
+      }
+      if (row.AI_guesses_rating != null) {
+        guessSum += row.AI_guesses_rating;
+        guessCount++;
+      }
+    });
+
+    const averageClueRating = clueCount ? clueSum / clueCount : null;
+    const averageGuessRating = guessCount ? guessSum / guessCount : null;
+
+    res.json({
+      success: true,
+      stats: {
+        totalGames,
+        aiSpymaster,
+        aiOperative,
+        averageClueRating,
+        averageGuessRating,
+      },
+    });
+  } catch (err: any) {
+    console.error("Stats endpoint error:", err.message);
+    res
+      .status(500)
+      .json({ success: false, message: err.message ?? "Unknown error" });
+  }
+});
+
 // @ts-ignore
 router.get("/:id", (req, res) => {
   const { id } = req.params;
@@ -700,5 +758,7 @@ async function saveGameToSupabase(game: GameType) {
     throw new Error("Failed to save game to Supabase");
   }
 }
+
+
 
 export default router;

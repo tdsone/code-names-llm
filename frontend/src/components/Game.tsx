@@ -4,6 +4,7 @@ import { Button } from "./ui/button";
 import { ClueForm } from "./ClueForm";
 import { Rules } from "./Rules";
 import { About } from "./About"
+import Statistics from "./Statistics";
 
 
 import search from '../assets/search-red.svg'
@@ -118,6 +119,8 @@ export function Game({
   const [showRulesModal, setShowRulesModal] = useState(false);
   // Controls visibility of the About modal
   const [showAboutModal, setShowAboutModal] = useState(false);
+  // Controls visibility of the Statistics modal
+  const [showStatsModal, setShowStatsModal] = useState(false);
 
   // Track which revealed card index we have already processed this turn
   const [lastRevealedIndex, setLastRevealedIndex] = useState<number | null>(null);
@@ -544,6 +547,26 @@ const handleEndTurn = async () => {
           </div>
         </div>
       )}
+      {showStatsModal && (
+        <div
+          className="fixed inset-0 bg-transparent flex items-start justify-center z-50 overflow-y-auto"
+          onClick={() => setShowStatsModal(false)}
+        >
+          <div
+            className="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-3xl w-full relative my-8 max-h-[90vh] overflow-y-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              onClick={() => setShowStatsModal(false)}
+              className="absolute top-4 right-4 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
+              aria-label="Close statistics modal"
+            >
+              ×
+            </button>
+            <Statistics />
+          </div>
+        </div>
+      )}
       <div className="max-w-6xl mx-auto">
         {isGameOver && !feedbackSubmitted && (
           <div className="absolute top-28 left-1/2 transform -translate-x-1/2 px-6 py-4 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 text-base sm:text-lg shadow-lg z-50 w-11/12 sm:w-auto">
@@ -602,6 +625,9 @@ const handleEndTurn = async () => {
               onClick={() => setShowAboutModal(true)}
             >
               About
+            </Button>
+            <Button variant="ghost" onClick={() => setShowStatsModal(true)}>
+              Stats
             </Button>
             <a
               href="https://coff.ee/juliakzl"
