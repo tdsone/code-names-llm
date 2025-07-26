@@ -95,7 +95,7 @@ const GameStatistics: React.FC = () => {
     <div style={containerStyle}>
       <h2 style={totalStyle}>
         {stats.totalGames}
-        <span style={totalLabelStyle}>Total Games Played</span>
+        <span style={totalLabelStyle}>Games Finished</span>
       </h2>
 
       <div style={rowStyle}>
