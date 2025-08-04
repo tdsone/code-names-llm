@@ -5,13 +5,13 @@ import path from "path";
 import fs from "fs";
 
 const app = express();
-const port = process.env.PORT || 3000;
+const port: number = Number(process.env.PORT) || 3000;
 
 app.use(express.json());
 
 const publicPath = process.env.PUBLIC_DIR
   ? path.resolve(__dirname, "..", process.env.PUBLIC_DIR)
-  : path.resolve(__dirname, "../public");
+  : path.resolve(__dirname, "../public")
 console.log("Resolved publicPath:", publicPath);
 
 app.use(express.static(publicPath));
@@ -31,6 +31,6 @@ app.use((req, res) => {
   }
 });
 
-app.listen(port, () => {
-  console.log(`Server is running on http://localhost:${port}`);
+app.listen(port, '0.0.0.0', () => {
+  console.log(`Server is running on http://0.0.0.0:${port}`);
 });
