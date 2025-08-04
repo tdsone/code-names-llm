@@ -30,13 +30,16 @@ jobs:
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
             set -e
-            # Ensure the target dir exists
-            mkdir -p "${{ secrets.TARGET_DIR }}"
-            # Sync updated build artifacts (adjust paths if your build output location differs)
+            # ensure target directories exist
+            mkdir -p "${{ secrets.TARGET_DIR }}/backend"
+            mkdir -p "${{ secrets.TARGET_DIR }}/frontend"
+            mkdir -p "${{ secrets.TARGET_DIR }}/shared"
+
+            # sync artifacts (adjust paths if build output location differs)
             rsync -a --delete ~/app/backend/dist/ "${{ secrets.TARGET_DIR }}/backend/"
             rsync -a --delete ~/app/frontend/dist/ "${{ secrets.TARGET_DIR }}/frontend/"
             rsync -a --delete ~/app/shared/ "${{ secrets.TARGET_DIR }}/shared/"
 
-            # Restart your backend service and reload Caddy
+            # restart services
             sudo systemctl restart clue3-app
             sudo systemctl reload caddy
