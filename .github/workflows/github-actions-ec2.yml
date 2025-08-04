@@ -11,8 +11,25 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout the files
-        uses: actions/checkout@v2
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Build frontend
+        working-directory: frontend
+        run: |
+          npm ci
+          npm run build
+
+      - name: Build backend
+        working-directory: backend
+        run: |
+          npm ci
+          npm run build
 
       - name: Deploy to Server 1
         uses: easingthemes/ssh-deploy@main
@@ -22,7 +39,7 @@ jobs:
           REMOTE_USER: ${{ secrets.USERNAME }}
           TARGET: ${{ secrets.TARGET_DIR }}
 
-      - name: "Post-deploy: sync and restart services"
+      - name: "Post-deploy: restart services"
         uses: appleboy/ssh-action@master
         with:
           host: ${{ secrets.HOST_DNS }}
@@ -30,16 +47,6 @@ jobs:
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
             set -e
-            # ensure target directories exist
-            mkdir -p "${{ secrets.TARGET_DIR }}/backend"
-            mkdir -p "${{ secrets.TARGET_DIR }}/frontend"
-            mkdir -p "${{ secrets.TARGET_DIR }}/shared"
-
-            # sync artifacts (adjust paths if build output location differs)
-            rsync -a --delete ~/app/backend/dist/ "${{ secrets.TARGET_DIR }}/backend/"
-            rsync -a --delete ~/app/frontend/dist/ "${{ secrets.TARGET_DIR }}/frontend/"
-            rsync -a --delete ~/app/shared/ "${{ secrets.TARGET_DIR }}/shared/"
-
-            # restart services
+            # restart backend and reload Caddy
             sudo systemctl restart clue3-app
             sudo systemctl reload caddy
