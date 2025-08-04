@@ -22,7 +22,7 @@ jobs:
           REMOTE_USER: ${{ secrets.USERNAME }}
           TARGET: ${{ secrets.TARGET_DIR }}
 
-      - name: Post-deploy: sync and restart services
+      - name: "Post-deploy: sync and restart services"
         uses: appleboy/ssh-action@master
         with:
           host: ${{ secrets.HOST_DNS }}
