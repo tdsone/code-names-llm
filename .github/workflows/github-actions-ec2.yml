@@ -35,18 +35,20 @@ jobs:
         uses: easingthemes/ssh-deploy@main
         env:
           SSH_PRIVATE_KEY: ${{ secrets.EC2_SSH_KEY }}
-          REMOTE_HOST: ${{ secrets.HOST_DNS }}
-          REMOTE_USER: ${{ secrets.USERNAME }}
-          TARGET: ${{ secrets.TARGET_DIR }}
+          REMOTE_HOST:      ${{ secrets.HOST_DNS }}
+          REMOTE_USER:      ${{ secrets.USERNAME }}
+          TARGET:           ${{ secrets.TARGET_DIR }}
 
       - name: "Post-deploy: restart services"
         uses: appleboy/ssh-action@master
         with:
-          host: ${{ secrets.HOST_DNS }}
+          host:     ${{ secrets.HOST_DNS }}
           username: ${{ secrets.USERNAME }}
-          key: ${{ secrets.EC2_SSH_KEY }}
+          key:      ${{ secrets.EC2_SSH_KEY }}
           script: |
             set -e
-            # restart backend and reload Caddy
+            echo "== Restarting backend service =="
             sudo systemctl restart clue3-app
+            echo "== Reloading Caddy =="
             sudo systemctl reload caddy
+            echo "== Done post-deploy steps =="
