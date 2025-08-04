@@ -51,4 +51,7 @@ jobs:
             sudo systemctl restart clue3-app
             echo "== Reloading Caddy =="
             sudo systemctl reload caddy
+            echo "== Writing deploy markers =="
+            echo "${GITHUB_SHA}"    > /home/ubuntu/app/.deployed_sha
+            date -u               > /home/ubuntu/app/.deployed_at
             echo "== Done post-deploy steps =="
