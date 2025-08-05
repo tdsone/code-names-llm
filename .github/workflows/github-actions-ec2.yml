@@ -19,17 +19,11 @@ jobs:
         with:
           node-version: '22'
 
-      - name: Build frontend
-        working-directory: frontend
+      - name: Build app
+        # this will run your build.sh which handles both frontend & backend
         run: |
-          npm ci
-          npm run build
-
-      - name: Build backend
-        working-directory: backend
-        run: |
-          npm ci
-          npm run build
+          chmod +x build.sh
+          ./build.sh
 
       - name: Deploy to Server 1
         uses: easingthemes/ssh-deploy@main
