@@ -532,8 +532,13 @@ router.put("/:id/cards/:index", async (req: Request, res: Response) => {
   res.setHeader("Transfer-Encoding", "chunked");
   res.flushHeaders();
   res.write(" "); // heartbeat chunk
+  // flush initial heartbeat
+  res.flush();
   // send a heartbeat every 30 seconds to prevent Cloudflare timeout
-  const heartbeat = setInterval(() => res.write(" "), 30000);
+  const heartbeat = setInterval(() => {
+    res.write(" ");
+    res.flush();
+  }, 30000);
 
   const { id, index } = req.params;
   const { team } = req.body as { team: "red" | "blue" };
@@ -595,6 +600,7 @@ router.put("/:id/cards/:index", async (req: Request, res: Response) => {
 
   // stop heartbeats before sending final response
   clearInterval(heartbeat);
+  res.flush();
   res.write(JSON.stringify({ success: true, game, flipped: game.cards[i] }));
   res.end();
 });
