@@ -3,11 +3,20 @@ import express from "express";
 import gameRoutes from "./routes/game";
 import path from "path";
 import fs from "fs";
+import compression from "compression"
+import { constants as zlibConstants } from "zlib";
 
 const app = express();
 const port: number = Number(process.env.PORT) || 3000;
 
 app.use(express.json());
+
+// enable gzip/deflate compression and allow flushing for chunked responses
+app.use(
+  compression({
+    flush: zlibConstants.Z_SYNC_FLUSH,
+  })
+);
 
 const publicPath = process.env.PUBLIC_DIR
   ? path.resolve(__dirname, "..", process.env.PUBLIC_DIR)

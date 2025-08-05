@@ -527,6 +527,12 @@ router.post("/:id/pass", async (req: Request, res: Response) => {
  */
 //@ts-ignore
 router.put("/:id/cards/:index", async (req: Request, res: Response) => {
+  // start chunked response to keep connection alive
+  res.setHeader("Content-Type", "application/json");
+  res.setHeader("Transfer-Encoding", "chunked");
+  res.flushHeaders();
+  res.write(" "); // heartbeat chunk
+
   const { id, index } = req.params;
   const { team } = req.body as { team: "red" | "blue" };
 
@@ -585,7 +591,8 @@ router.put("/:id/cards/:index", async (req: Request, res: Response) => {
     }
   }
 
-  res.json({ success: true, game, flipped: game.cards[i] });
+  res.write(JSON.stringify({ success: true, game, flipped: game.cards[i] }));
+  res.end();
 });
 
 //@ts-ignore TESTING AI CLUES - NOT FOR PROD
