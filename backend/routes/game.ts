@@ -527,6 +527,7 @@ router.post("/:id/pass", async (req: Request, res: Response) => {
  */
 //@ts-ignore
 router.put("/:id/cards/:index", async (req: Request, res: Response) => {
+  console.log(`[flip] ↦ ENTER id=${req.params.id} idx=${req.params.index} time=${new Date().toISOString()}`);
   // start chunked response to keep connection alive
   res.setHeader("Content-Type", "application/json");
   res.setHeader("Transfer-Encoding", "chunked");
