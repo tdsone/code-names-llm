@@ -7,7 +7,7 @@ on:
 
 jobs:
   deploy:
-    name: Deploy to EC2 on main branch push
+    name: Build & Deploy to EC2
     runs-on: ubuntu-latest
 
     steps:
@@ -20,7 +20,6 @@ jobs:
           node-version: '22'
 
       - name: Build app
-        # this will run your build.sh which handles both frontend & backend
         run: |
           chmod +x build.sh
           ./build.sh
@@ -31,7 +30,7 @@ jobs:
           SSH_PRIVATE_KEY: ${{ secrets.EC2_SSH_KEY }}
           REMOTE_HOST:      ${{ secrets.HOST_DNS }}
           REMOTE_USER:      ${{ secrets.USERNAME }}
-          TARGET:           ${{ secrets.TARGET_DIR }}
+          TARGET:           /home/ubuntu/app
 
       - name: "Post-deploy: restart services"
         uses: appleboy/ssh-action@master
